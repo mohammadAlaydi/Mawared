@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #0B5E50;
+  --color-primary-light: #1A7A69;
+  --color-primary-dark: #073D34;
+  --color-accent: #C9A84C;
+  --color-accent-light: #E0C472;
+  --color-surface: #F7F6F2;
+  --color-surface-dark: #EEEEE8;
+  --color-sidebar: #073D34;
+  --color-sidebar-hover: #0B5E50;
+  --color-sidebar-active: #1A7A69;
+  --font-cairo: "Cairo", sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-cairo);
+  background-color: var(--color-surface);
+  color: #1a1a2e;
+  direction: rtl;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #aaa; }
+
+::selection { background-color: var(--color-primary); color: white; }
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+.animate-shake { animation: shake 0.4s ease-in-out; }
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
