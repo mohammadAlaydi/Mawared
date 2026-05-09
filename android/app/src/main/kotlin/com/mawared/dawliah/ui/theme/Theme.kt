@@ -1,13 +1,15 @@
 package com.mawared.dawliah.ui.theme
 
 import android.app.Activity
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.core.view.WindowCompat
 
 /**
@@ -47,15 +49,19 @@ fun MawaredTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
+            @Suppress("DEPRECATION")
             window.statusBarColor = PrimaryGreenDark.toArgb()
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
         }
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = MawaredTypography,
-        shapes = MawaredShapes,
-        content = content,
-    )
+    // Force RTL layout direction globally for Arabic-first app
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = MawaredTypography,
+            shapes = MawaredShapes,
+            content = content,
+        )
+    }
 }

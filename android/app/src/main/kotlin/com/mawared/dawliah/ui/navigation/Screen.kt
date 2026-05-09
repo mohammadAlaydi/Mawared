@@ -18,23 +18,35 @@ sealed class Screen(val route: String) {
     // ===== Main (Bottom Nav container) =====
     data object Main : Screen("main")
 
-    // ===== Home Tab =====
+    // ===== Bottom Nav Tabs (6 tabs matching عون) =====
     data object Home : Screen("home")
+    data object Contracts : Screen("contracts")
+    data object MyOrders : Screen("my_orders")
+    data object Offers : Screen("offers")
+    data object Branches : Screen("branches")
+    data object More : Screen("more")
 
-    // ===== Workers Tab =====
+    // ===== Workers Flow (accessed from Home/More) =====
     data object Workers : Screen("workers")
+    data object NationalityWorkers : Screen("workers/nationality/{nationality}") {
+        fun createRoute(nationality: String) = "workers/nationality/$nationality"
+    }
     data object WorkerDetail : Screen("workers/detail/{workerId}") {
         fun createRoute(workerId: String) = "workers/detail/$workerId"
     }
-    data object Favorites : Screen("workers/favorites")
+    data object SaveList : Screen("workers/save_list")
 
-    // ===== Orders Tab =====
-    data object MyOrders : Screen("my_orders")
+    // ===== Orders =====
     data object OrderDetail : Screen("orders/detail/{orderId}") {
         fun createRoute(orderId: String) = "orders/detail/$orderId"
     }
 
-    // ===== Profile Tab =====
+    // ===== Contract Detail =====
+    data object ContractDetail : Screen("contracts/detail/{contractId}") {
+        fun createRoute(contractId: String) = "contracts/detail/$contractId"
+    }
+
+    // ===== Profile Sub-Screens =====
     data object Profile : Screen("profile")
     data object EditProfile : Screen("profile/edit")
     data object SavedAddresses : Screen("profile/addresses")
@@ -48,6 +60,7 @@ sealed class Screen(val route: String) {
     data object ServicePackages : Screen("services/packages/{serviceId}") {
         fun createRoute(serviceId: String) = "services/packages/$serviceId"
     }
+    data object ServiceRequest : Screen("services/request")
 
     // ===== Order Flow =====
     data object OrderStep1 : Screen("order/step1")

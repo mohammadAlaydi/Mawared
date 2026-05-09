@@ -2,7 +2,9 @@ package com.mawared.dawliah.viewmodel
 
 import androidx.lifecycle.ViewModel
 import com.mawared.dawliah.data.mock.MockAddresses
+import com.mawared.dawliah.data.mock.MockNotifications
 import com.mawared.dawliah.data.model.Address
+import com.mawared.dawliah.data.model.Notification
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,6 +16,7 @@ data class ProfileUiState(
     val avatarUrl: String = "https://randomuser.me/api/portraits/men/10.jpg",
     val savedAddresses: List<Address> = MockAddresses.all,
     val verificationStatus: VerificationStatus = VerificationStatus.NOT_VERIFIED,
+    val notifications: List<Notification> = MockNotifications.all,
 )
 
 enum class VerificationStatus { NOT_VERIFIED, PENDING, VERIFIED, FAILED }
@@ -28,4 +31,10 @@ class ProfileViewModel : ViewModel() {
     fun startVerification() { _uiState.update { it.copy(verificationStatus = VerificationStatus.PENDING) } }
     fun setVerified() { _uiState.update { it.copy(verificationStatus = VerificationStatus.VERIFIED) } }
     fun setVerificationFailed() { _uiState.update { it.copy(verificationStatus = VerificationStatus.FAILED) } }
+
+    fun markAllRead() {
+        _uiState.update { state ->
+            state.copy(notifications = state.notifications.map { it.copy(isRead = true) })
+        }
+    }
 }

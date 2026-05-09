@@ -5,11 +5,12 @@ package com.mawared.dawliah.data.model
  */
 data class Notification(
     val id: String,
-    val titleAr: String,
-    val bodyAr: String,
+    val title: String,
+    val body: String,
     val type: NotificationType,
     val relatedOrderId: String? = null,
-    val timestamp: String,
+    val time: String,
+    val timeGroup: String = "اليوم",
     val isRead: Boolean = false,
 )
 
@@ -20,6 +21,5 @@ enum class NotificationType {
     ORDER_UPDATE,
     PROMOTION,
     SYSTEM,
-    PAYMENT,
-    VERIFICATION,
+    SUCCESS,
 }

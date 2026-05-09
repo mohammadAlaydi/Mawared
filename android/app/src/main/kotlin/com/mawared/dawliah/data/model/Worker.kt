@@ -18,6 +18,7 @@ data class Worker(
     val languages: List<String>,
     val skills: List<String>,
     val bio: String,
+    val rating: Float = 4.0f,
     val isFavorite: Boolean = false,
 )
 
