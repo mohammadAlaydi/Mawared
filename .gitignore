@@ -1,0 +1,41 @@
+# ======= OS =======
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ======= IDEs =======
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ======= Node / Next.js =======
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# ======= Android =======
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/*.iml
+android/app/*.iml
+
+# ======= Logs =======
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ======= Environment =======
+.env
+.env.local
+.env.production
+.env.development
+
+# ======= Misc =======
+*.pdf

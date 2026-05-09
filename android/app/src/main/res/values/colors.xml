@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary -->
+    <color name="primary_green">#FF0B5E50</color>
+    <color name="primary_green_light">#FF1A7A69</color>
+    <color name="primary_green_dark">#FF073D34</color>
+
+    <!-- Accent -->
+    <color name="accent_gold">#FFC9A84C</color>
+    <color name="accent_gold_light">#FFE8C97A</color>
+    <color name="accent_gold_dark">#FF9A7A2E</color>
+
+    <!-- Backgrounds -->
+    <color name="background_warm">#FFF7F6F2</color>
+    <color name="surface_white">#FFFFFFFF</color>
+    <color name="surface_card">#FFFAF9F6</color>
+
+    <!-- Text -->
+    <color name="text_primary">#FF1A1A1A</color>
+    <color name="text_secondary">#FF6B6B6B</color>
+    <color name="text_hint">#FFAAAAAA</color>
+
+    <!-- Status -->
+    <color name="status_success">#FF2E7D32</color>
+    <color name="status_warning">#FFE65100</color>
+    <color name="status_error">#FFC62828</color>
+    <color name="status_info">#FF0277BD</color>
+</resources>

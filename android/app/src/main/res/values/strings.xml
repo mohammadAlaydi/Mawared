@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">موارد الدولية</string>
+    <string name="app_tagline">خدمك، راحتك</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_home">الرئيسية</string>
+    <string name="nav_workers">العمالة</string>
+    <string name="nav_orders">طلباتي</string>
+    <string name="nav_profile">حسابي</string>
+
+    <!-- Auth -->
+    <string name="enter_phone">أدخل رقم جوالك</string>
+    <string name="sms_code_message">سنرسل لك رمز التحقق عبر SMS</string>
+    <string name="send_otp">إرسال رمز التحقق</string>
+    <string name="otp_title">رمز التحقق</string>
+    <string name="otp_sent_to">أدخل الرمز المرسل إلى</string>
+    <string name="resend_code">إعادة إرسال الرمز</string>
+    <string name="didnt_receive">لم يصلك الرمز؟</string>
+    <string name="resend_timer">إعادة الإرسال خلال %s</string>
+    <string name="terms_agreement">بالمتابعة، أنت توافق على شروط الاستخدام وسياسة الخصوصية</string>
+    <string name="complete_profile">أكمل بياناتك</string>
+    <string name="full_name">الاسم الكامل</string>
+    <string name="city">المدينة</string>
+    <string name="save_continue">حفظ ومتابعة</string>
+    <string name="skip_now">تخطى الآن</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_next">التالي</string>
+    <string name="onboarding_start">ابدأ الآن</string>
+    <string name="onboarding_skip">تخطى</string>
+    <string name="onboarding_title_1">خدمك في راحتك</string>
+    <string name="onboarding_sub_1">احجز عاملة منزلية أو سائقاً من منزلك بضغطة واحدة</string>
+    <string name="onboarding_title_2">عمالة موثوقة ومعتمدة</string>
+    <string name="onboarding_sub_2">جميع العمال يخضعون لعملية التحقق والتدريب المهني</string>
+    <string name="onboarding_title_3">تابع طلبك لحظة بلحظة</string>
+    <string name="onboarding_sub_3">تتبع حالة طلبك وصولاً حتى وصول العامل</string>
+
+    <!-- Home -->
+    <string name="greeting">مرحباً، %s 👋</string>
+    <string name="our_services">خدماتنا</string>
+    <string name="view_all">عرض الكل</string>
+    <string name="featured_workers">عمال مميزون</string>
+    <string name="how_it_works">كيف يعمل التطبيق</string>
+    <string name="step_1">اختر الخدمة المناسبة</string>
+    <string name="step_2">حدد الباقة والعامل</string>
+    <string name="step_3">اطلب وتابع طلبك</string>
+    <string name="happy_clients">عميل راضٍ</string>
+    <string name="available_workers">عامل متاح</string>
+    <string name="satisfaction_rate">نسبة الرضا</string>
+
+    <!-- Services -->
+    <string name="domestic_worker">عاملة منزلية</string>
+    <string name="driver">سائق</string>
+    <string name="elderly_care">رعاية مسنين</string>
+    <string name="child_care">مربية أطفال</string>
+    <string name="hourly">بالساعة</string>
+    <string name="monthly">شهري</string>
+    <string name="choose_package">اختر الباقة</string>
+    <string name="most_popular">الأكثر طلباً</string>
+
+    <!-- Workers -->
+    <string name="choose_worker">اختر العامل</string>
+    <string name="filter">تصفية</string>
+    <string name="filter_results">تصفية النتائج</string>
+    <string name="nationality">الجنسية</string>
+    <string name="profession">المهنة</string>
+    <string name="salary">الراتب</string>
+    <string name="experience_years">سنوات الخبرة</string>
+    <string name="status">الحالة</string>
+    <string name="available">متاح</string>
+    <string name="not_available">غير متاح</string>
+    <string name="apply_filter">تطبيق الفلتر</string>
+    <string name="reset_filter">إعادة تعيين</string>
+    <string name="sort_by">الترتيب</string>
+    <string name="all">الكل</string>
+    <string name="years_experience">%d سنوات خبرة</string>
+    <string name="sar_monthly">%s ريال/شهر</string>
+    <string name="read_more">اقرأ المزيد</string>
+    <string name="add_to_favorites">إضافة للمفضلة</string>
+    <string name="order_now">اطلب الآن</string>
+
+    <!-- Favorites -->
+    <string name="favorites">المفضلة</string>
+    <string name="no_favorites">لا يوجد مفضلة بعد</string>
+    <string name="browse_workers">تصفح العمال</string>
+
+    <!-- Order Flow -->
+    <string name="service_step">الخدمة</string>
+    <string name="address_step">العنوان</string>
+    <string name="review_step">المراجعة</string>
+    <string name="payment_step">الدفع</string>
+    <string name="next">التالي</string>
+    <string name="choose_address">اختر العنوان</string>
+    <string name="add_new_address">إضافة عنوان جديد</string>
+    <string name="additional_notes">ملاحظات إضافية للعامل</string>
+    <string name="promo_code">كود الخصم</string>
+    <string name="apply">تطبيق</string>
+    <string name="package_price">سعر الباقة</string>
+    <string name="service_fee">رسوم الخدمة</string>
+    <string name="discount">خصم الكود</string>
+    <string name="total">الإجمالي</string>
+    <string name="sar">ريال</string>
+    <string name="terms_agree">أوافق على الشروط والأحكام</string>
+    <string name="confirm_order">تأكيد الطلب</string>
+    <string name="payment_method">طريقة الدفع</string>
+    <string name="bank_card">بطاقة بنكية</string>
+    <string name="apple_pay">Apple Pay</string>
+    <string name="coming_soon">قريباً</string>
+    <string name="installments">التقسيط</string>
+    <string name="installments_desc">4 أقساط بدون فوائد</string>
+    <string name="pay_now">ادفع الآن</string>
+    <string name="processing">جاري المعالجة…</string>
+
+    <!-- Order Success -->
+    <string name="order_success">تم إرسال طلبك بنجاح! 🎉</string>
+    <string name="order_number">رقم الطلب: %s</string>
+    <string name="team_contact">سيتصل بك فريقنا خلال 24 ساعة لتأكيد الطلب</string>
+    <string name="track_order">تتبع طلبي</string>
+    <string name="back_home">العودة للرئيسية</string>
+
+    <!-- My Orders -->
+    <string name="my_orders">طلباتي</string>
+    <string name="active_orders">جاري</string>
+    <string name="completed_orders">مكتمل</string>
+    <string name="cancelled_orders">ملغى</string>
+    <string name="view_details">عرض التفاصيل</string>
+    <string name="no_orders">لا يوجد طلبات</string>
+
+    <!-- Order Detail -->
+    <string name="order_details">تفاصيل الطلب</string>
+    <string name="details_tab">تفاصيل</string>
+    <string name="tracking_tab">تتبع الطلب</string>
+    <string name="support_tab">الدعم</string>
+    <string name="cancel_order">إلغاء الطلب</string>
+    <string name="cancel_confirm">هل أنت متأكد من إلغاء الطلب؟</string>
+    <string name="yes">نعم</string>
+    <string name="no">لا</string>
+
+    <!-- Profile -->
+    <string name="edit_profile">تعديل الملف الشخصي</string>
+    <string name="saved_addresses">عناويني المحفوظة</string>
+    <string name="my_notifications">إشعاراتي</string>
+    <string name="identity_verification">تحقق من الهوية</string>
+    <string name="contact_us">تواصل معنا</string>
+    <string name="terms_conditions">الشروط والأحكام</string>
+    <string name="privacy_policy">سياسة الخصوصية</string>
+    <string name="rate_app">تقييم التطبيق</string>
+    <string name="logout">تسجيل الخروج</string>
+    <string name="logout_confirm">هل تريد تسجيل الخروج؟</string>
+    <string name="thank_rating">شكراً لتقييمك!</string>
+
+    <!-- Notifications -->
+    <string name="notifications">الإشعارات</string>
+    <string name="mark_all_read">تحديد الكل كمقروء</string>
+    <string name="no_notifications">لا يوجد إشعارات</string>
+    <string name="today">اليوم</string>
+    <string name="yesterday">الأمس</string>
+    <string name="this_week">هذا الأسبوع</string>
+
+    <!-- Support -->
+    <string name="support_help">الدعم والمساعدة</string>
+    <string name="faq">الأسئلة الشائعة</string>
+    <string name="submit_complaint">إرسال الشكوى</string>
+    <string name="complaint_type">نوع الشكوى</string>
+    <string name="complaint_description">وصف الشكوى</string>
+    <string name="complaint_sent">تم إرسال شكواك بنجاح</string>
+
+    <!-- Verification -->
+    <string name="not_verified">لم يتم التحقق من هويتك</string>
+    <string name="verify_body">يجب التحقق من هويتك قبل تقديم أول طلب عبر منصة Signit.sa</string>
+    <string name="start_verification">ابدأ التحقق الآن</string>
+    <string name="verification_pending">التحقق قيد المعالجة</string>
+    <string name="verification_pending_body">نحن نراجع معلوماتك، عادةً ما تستغرق هذه العملية من دقائق إلى ساعات</string>
+    <string name="refresh_status">تحديث الحالة</string>
+    <string name="verified">تم التحقق من هويتك ✓</string>
+    <string name="verification_failed">فشل التحقق</string>
+    <string name="verification_failed_body">يرجى المحاولة مجدداً أو التواصل مع الدعم</string>
+    <string name="retry">إعادة المحاولة</string>
+
+    <!-- Address Form -->
+    <string name="address_name">اسم العنوان</string>
+    <string name="district">الحي</string>
+    <string name="street">الشارع</string>
+    <string name="building_number">رقم المبنى</string>
+    <string name="extra_notes">ملاحظات إضافية</string>
+    <string name="save_address">حفظ العنوان</string>
+    <string name="delete_address">حذف العنوان</string>
+    <string name="delete_confirm">هل تريد حذف هذا العنوان؟</string>
+
+    <!-- Demo Mode -->
+    <string name="demo_banner">أنت في وضع العرض التجريبي — جميع البيانات وهمية</string>
+
+    <!-- Worker will be selected later -->
+    <string name="worker_tbd">سيتم اختيار العامل لاحقاً</string>
+
+    <!-- Nationalities -->
+    <string name="filipino">فلبينية</string>
+    <string name="indonesian">إندونيسية</string>
+    <string name="ethiopian">إثيوبية</string>
+    <string name="indian">هندية</string>
+    <string name="sri_lankan">سريلانكية</string>
+    <string name="nepalese">نيبالية</string>
+
+    <!-- Saudi Cities -->
+    <string name="riyadh">الرياض</string>
+    <string name="jeddah">جدة</string>
+    <string name="dammam">الدمام</string>
+    <string name="mecca">مكة المكرمة</string>
+    <string name="medina">المدينة المنورة</string>
+    <string name="khobar">الخبر</string>
+    <string name="tabuk">تبوك</string>
+    <string name="abha">أبها</string>
+</resources>
