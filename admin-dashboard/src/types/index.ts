@@ -10,6 +10,26 @@ export type OrderStatus =
   | 'completed'
   | 'cancelled';
 
+export type PackageType = 'hourly' | 'monthly';
+
+export interface Service {
+  id: string;
+  name: string;
+  description: string;
+  iconName: string;
+  active: boolean;
+}
+
+export interface Package {
+  id: string;
+  name: string;
+  description: string;
+  duration: string;
+  price: number;
+  type: PackageType;
+  active: boolean;
+}
+
 export type VerificationStatus = 'verified' | 'pending' | 'not_verified' | 'failed';
 
 export interface Order {

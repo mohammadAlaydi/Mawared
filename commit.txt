@@ -1,0 +1,25 @@
+تم التعديل والبناء ناجح.
+
+الملفات المعدلة: admin-dashboard/src/lib/dashboard-context.tsx وغيرها
+
+اللي صار:
+أضفت localStorage يحفظ البيانات تلقائياً عند أي تغيير:
+
+البيانات	مفتاح التخزين
+الطلبات	mawared_orders
+العمال	mawared_workers
+الخدمات	mawared_services
+الباقات	mawared_packages
+
+آلية العمل:
+- أول فتح: يشيك على localStorage — إذا فيه بيانات محفوظة يحملها، وإذا ما فيه يعرض البيانات التجريبية (mock data)
+- أي تعديل: سواء إضافة، تعديل، حذف، أو تغيير حالة طلب — يُحفظ فوراً في localStorage
+- التحديث (Refresh): البيانات تبقى موجودة وما تروح
+
+ملاحظة:
+لو حاب ترجع للبيانات الافتراضية الأصلية من جديد، افتح Console في المتصفح ونفذ:
+localStorage.removeItem('mawared_orders')
+localStorage.removeItem('mawared_workers')
+localStorage.removeItem('mawared_services')
+localStorage.removeItem('mawared_packages')
+location.reload()

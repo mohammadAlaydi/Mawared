@@ -1,4 +1,20 @@
-import { Order, Worker, Customer, Payment } from '@/types';
+import { Order, Worker, Customer, Payment, Service, Package } from '@/types';
+
+export const mockServices: Service[] = [
+  { id: '1', name: 'عاملة منزلية', description: 'تنظيف، طبخ، كي، وترتيب المنزل', iconName: 'Home', active: true },
+  { id: '2', name: 'سائق خاص', description: 'قيادة احترافية وتوصيل يومي', iconName: 'Car', active: true },
+  { id: '3', name: 'مربية أطفال', description: 'رعاية شاملة وتعليم مبكر للأطفال', iconName: 'Baby', active: true },
+  { id: '4', name: 'رعاية مسنين', description: 'مرافقة ورعاية صحية لكبار السن', iconName: 'Heart', active: true },
+];
+
+export const mockPackages: Package[] = [
+  { id: '1', name: 'زيارة أساسية', description: '٤ ساعات تنظيف', duration: '٤ ساعات', price: 150, type: 'hourly', active: true },
+  { id: '2', name: 'زيارة مميزة', description: '٨ ساعات تنظيف + كي', duration: '٨ ساعات', price: 280, type: 'hourly', active: true },
+  { id: '3', name: 'زيارة VIP', description: 'يوم كامل — كل الخدمات', duration: '١٢ ساعة', price: 400, type: 'hourly', active: true },
+  { id: '4', name: 'الباقة الأساسية', description: 'عاملة منزلية واحدة', duration: 'شهري', price: 1500, type: 'monthly', active: true },
+  { id: '5', name: 'الباقة المميزة', description: 'عاملة مدربة + خدمات شاملة', duration: 'شهري', price: 2800, type: 'monthly', active: true },
+  { id: '6', name: 'الباقة الذهبية', description: 'عاملة + سائق', duration: 'شهري', price: 4500, type: 'monthly', active: true },
+];
 
 export const mockOrders: Order[] = [
   { id: '1', orderNumber: 'MD-2024-00101', customerName: 'أحمد العتيبي', customerPhone: '0551234567', serviceType: 'عاملة منزلية', packageName: 'الباقة المميزة', workerName: 'ماريا سانتوس', address: 'حي النرجس', city: 'الرياض', status: 'completed', totalAmount: 2800, placedAt: '2024-07-01', notes: '' },

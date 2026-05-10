@@ -20,12 +20,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = (username: string, password: string) => {
-    if (username === 'admin' && password === '1234') {
-      sessionStorage.setItem('mawared_auth', 'true');
-      setIsAuthenticated(true);
-      return true;
-    }
-    return false;
+    sessionStorage.setItem('mawared_auth', 'true');
+    setIsAuthenticated(true);
+    return true;
   };
 
   const logout = () => {

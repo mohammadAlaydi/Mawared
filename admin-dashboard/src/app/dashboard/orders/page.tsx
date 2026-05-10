@@ -4,8 +4,8 @@ import { useDashboard } from '@/lib/dashboard-context';
 import PageHeader from '@/components/dashboard/PageHeader';
 import OrderStatusBadge, { statusConfig } from '@/components/dashboard/OrderStatusBadge';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { Download, Search, RefreshCw } from 'lucide-react';
-import { OrderStatus } from '@/types';
+import { Download, Search, RefreshCw, Eye, X } from 'lucide-react';
+import { Order, OrderStatus } from '@/types';
 import { toast } from 'sonner';
 
 export default function OrdersPage() {
@@ -16,6 +16,7 @@ export default function OrdersPage() {
   const [page, setPage] = useState(1);
   const [modalOrder, setModalOrder] = useState<string | null>(null);
   const [newStatus, setNewStatus] = useState<OrderStatus>('submitted');
+  const [detailOrder, setDetailOrder] = useState<Order | null>(null);
   const perPage = 10;
 
   const filtered = orders.filter(o => {
@@ -88,7 +89,10 @@ export default function OrdersPage() {
                   <td className="px-4 py-3"><OrderStatusBadge status={order.status} /></td>
                   <td className="px-4 py-3 text-gray-500">{formatDate(order.placedAt)}</td>
                   <td className="px-4 py-3">
-                    <button onClick={() => { setModalOrder(order.id); setNewStatus(order.status); }} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-[#0B5E50]" title="تحديث الحالة"><RefreshCw size={15} /></button>
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => setDetailOrder(order)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-[#0B5E50]" title="عرض التفاصيل"><Eye size={15} /></button>
+                      <button onClick={() => { setModalOrder(order.id); setNewStatus(order.status); }} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-[#0B5E50]" title="تحديث الحالة"><RefreshCw size={15} /></button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -105,6 +109,69 @@ export default function OrdersPage() {
           </div>
         )}
       </div>
+
+      {/* Order Detail Modal */}
+      {detailOrder && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setDetailOrder(null)}>
+          <div className="bg-white rounded-2xl p-6 w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold">تفاصيل الطلب</h3>
+              <button onClick={() => setDetailOrder(null)} className="p-1 rounded-lg hover:bg-gray-100"><X size={20} /></button>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="bg-gray-50 rounded-xl p-3">
+                <p className="text-xs text-gray-500 mb-1">رقم الطلب</p>
+                <p className="font-semibold text-[#0B5E50]">{detailOrder.orderNumber}</p>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-3">
+                <p className="text-xs text-gray-500 mb-1">الحالة</p>
+                <OrderStatusBadge status={detailOrder.status} />
+              </div>
+              <div className="bg-gray-50 rounded-xl p-3">
+                <p className="text-xs text-gray-500 mb-1">العميل</p>
+                <p className="font-semibold">{detailOrder.customerName}</p>
+                <p className="text-xs text-gray-400" dir="ltr">{detailOrder.customerPhone}</p>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-3">
+                <p className="text-xs text-gray-500 mb-1">المدينة</p>
+                <p className="font-semibold">{detailOrder.city}</p>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-3">
+                <p className="text-xs text-gray-500 mb-1">الخدمة</p>
+                <p className="font-semibold">{detailOrder.serviceType}</p>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-3">
+                <p className="text-xs text-gray-500 mb-1">الباقة</p>
+                <p className="font-semibold">{detailOrder.packageName}</p>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-3">
+                <p className="text-xs text-gray-500 mb-1">العامل</p>
+                <p className="font-semibold">{detailOrder.workerName || <span className="text-gray-400">—</span>}</p>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-3">
+                <p className="text-xs text-gray-500 mb-1">المبلغ الإجمالي</p>
+                <p className="font-semibold">{formatCurrency(detailOrder.totalAmount)}</p>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-3 sm:col-span-2">
+                <p className="text-xs text-gray-500 mb-1">العنوان</p>
+                <p className="font-semibold">{detailOrder.address}</p>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-3 sm:col-span-2">
+                <p className="text-xs text-gray-500 mb-1">ملاحظات</p>
+                <p className="font-semibold">{detailOrder.notes || <span className="text-gray-400">لا توجد ملاحظات</span>}</p>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-3">
+                <p className="text-xs text-gray-500 mb-1">تاريخ الطلب</p>
+                <p className="font-semibold">{formatDate(detailOrder.placedAt)}</p>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-5">
+              <button onClick={() => { setDetailOrder(null); setModalOrder(detailOrder.id); setNewStatus(detailOrder.status); }} className="flex-1 py-2.5 bg-[#0B5E50] text-white rounded-xl font-semibold hover:bg-[#073D34]">تحديث الحالة</button>
+              <button onClick={() => setDetailOrder(null)} className="flex-1 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200">إغلاق</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Update Status Modal */}
       {modalOrder && (
