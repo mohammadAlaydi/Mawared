@@ -48,17 +48,47 @@ export interface Order {
   notes: string;
 }
 
+export interface WorkerDocument {
+  id: string;
+  type: 'passport' | 'iqama' | 'medical' | 'contract' | 'other';
+  label: string;
+  imageUrl: string;
+  uploadedAt: string;
+  verified: boolean;
+}
+
+export interface WorkHistory {
+  id: string;
+  customerName: string;
+  serviceName: string;
+  startDate: string;
+  endDate: string | null;
+  rating: number;
+  notes: string;
+}
+
 export interface Worker {
   id: string;
   nameAr: string;
   nationality: string;
   nationalityFlag: string;
-  profession: string;
+  professions: string[];
   experienceYears: number;
   age: number;
   monthlySalary: number;
   isAvailable: boolean;
   joinedAt: string;
+  // Extended profile fields
+  photoUrl: string;
+  cvImageUrl: string;
+  bio: string;
+  religion: string;
+  maritalStatus: string;
+  languages: string[];
+  height: number;
+  weight: number;
+  documents: WorkerDocument[];
+  workHistory: WorkHistory[];
 }
 
 export interface Customer {

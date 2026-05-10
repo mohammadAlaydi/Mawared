@@ -34,22 +34,43 @@ export const mockOrders: Order[] = [
   { id: '15', orderNumber: 'MD-2024-00115', customerName: 'تركي الرشيدي', customerPhone: '0555678901', serviceType: 'عاملة منزلية', packageName: 'الباقة الأساسية', workerName: 'جيني كروز', address: 'حي الملك فهد', city: 'الرياض', status: 'completed', totalAmount: 1500, placedAt: '2024-06-10', notes: '' },
 ];
 
+function makeWorker(
+  id: string, nameAr: string, nationality: string, flag: string, professions: string[],
+  exp: number, age: number, salary: number, available: boolean, joined: string,
+  religion: string, marital: string, languages: string[], height: number, weight: number, bio: string,
+): Worker {
+  return {
+    id, nameAr, nationality, nationalityFlag: flag, professions, experienceYears: exp,
+    age, monthlySalary: salary, isAvailable: available, joinedAt: joined,
+    photoUrl: `/workers/photo-${id}.png`, cvImageUrl: `/workers/doc-cv.png`, bio,
+    religion, maritalStatus: marital, languages, height, weight,
+    documents: [
+      { id: `${id}-pass`, type: 'passport', label: 'جواز السفر', imageUrl: `/workers/doc-passport.png`, uploadedAt: joined, verified: true },
+      { id: `${id}-iqama`, type: 'iqama', label: 'الإقامة', imageUrl: `/workers/doc-iqama.png`, uploadedAt: joined, verified: true },
+      { id: `${id}-med`, type: 'medical', label: 'التقرير الطبي', imageUrl: `/workers/doc-medical.png`, uploadedAt: joined, verified: id !== '3' },
+    ],
+    workHistory: [
+      { id: `${id}-h1`, customerName: 'عميل سابق', serviceName: professions[0], startDate: '2023-01-01', endDate: '2023-12-31', rating: 4 + (parseInt(id) % 2), notes: 'أداء ممتاز' },
+    ],
+  };
+}
+
 export const mockWorkers: Worker[] = [
-  { id: '1', nameAr: 'ماريا سانتوس', nationality: 'فلبينية', nationalityFlag: '🇵🇭', profession: 'عاملة منزلية', experienceYears: 5, age: 32, monthlySalary: 1800, isAvailable: false, joinedAt: '2024-01-15' },
-  { id: '2', nameAr: 'روزا ديلا كروز', nationality: 'فلبينية', nationalityFlag: '🇵🇭', profession: 'مربية أطفال', experienceYears: 7, age: 35, monthlySalary: 2200, isAvailable: false, joinedAt: '2024-02-01' },
-  { id: '3', nameAr: 'سيتي نور', nationality: 'إندونيسية', nationalityFlag: '🇮🇩', profession: 'عاملة منزلية', experienceYears: 3, age: 28, monthlySalary: 1500, isAvailable: true, joinedAt: '2024-03-10' },
-  { id: '4', nameAr: 'أمينة حسن', nationality: 'إثيوبية', nationalityFlag: '🇪🇹', profession: 'رعاية مسنين', experienceYears: 4, age: 30, monthlySalary: 1600, isAvailable: false, joinedAt: '2024-01-20' },
-  { id: '5', nameAr: 'راجيش كومار', nationality: 'هندية', nationalityFlag: '🇮🇳', profession: 'سائق خاص', experienceYears: 8, age: 38, monthlySalary: 2000, isAvailable: false, joinedAt: '2024-04-05' },
-  { id: '6', nameAr: 'جوسلين مارتينيز', nationality: 'فلبينية', nationalityFlag: '🇵🇭', profession: 'عاملة منزلية', experienceYears: 6, age: 34, monthlySalary: 2000, isAvailable: false, joinedAt: '2024-02-15' },
-  { id: '7', nameAr: 'فاطمة عبدي', nationality: 'إثيوبية', nationalityFlag: '🇪🇹', profession: 'رعاية مسنين', experienceYears: 5, age: 31, monthlySalary: 1700, isAvailable: false, joinedAt: '2024-03-01' },
-  { id: '8', nameAr: 'ديوي سوسانتي', nationality: 'إندونيسية', nationalityFlag: '🇮🇩', profession: 'عاملة منزلية', experienceYears: 4, age: 29, monthlySalary: 1500, isAvailable: true, joinedAt: '2024-05-10' },
-  { id: '9', nameAr: 'آنا ريس', nationality: 'فلبينية', nationalityFlag: '🇵🇭', profession: 'عاملة منزلية', experienceYears: 3, age: 27, monthlySalary: 1600, isAvailable: false, joinedAt: '2024-04-20' },
-  { id: '10', nameAr: 'سونيتا رام', nationality: 'هندية', nationalityFlag: '🇮🇳', profession: 'مربية أطفال', experienceYears: 6, age: 33, monthlySalary: 1900, isAvailable: true, joinedAt: '2024-06-01' },
-  { id: '11', nameAr: 'ليزا فرنانديز', nationality: 'فلبينية', nationalityFlag: '🇵🇭', profession: 'عاملة منزلية', experienceYears: 2, age: 25, monthlySalary: 1400, isAvailable: true, joinedAt: '2024-06-15' },
-  { id: '12', nameAr: 'هالوما عدن', nationality: 'إثيوبية', nationalityFlag: '🇪🇹', profession: 'عاملة منزلية', experienceYears: 3, age: 26, monthlySalary: 1400, isAvailable: true, joinedAt: '2024-05-20' },
-  { id: '13', nameAr: 'أحمد حسين', nationality: 'هندية', nationalityFlag: '🇮🇳', profession: 'سائق خاص', experienceYears: 10, age: 42, monthlySalary: 2200, isAvailable: false, joinedAt: '2024-01-10' },
-  { id: '14', nameAr: 'كارمن لوبيز', nationality: 'فلبينية', nationalityFlag: '🇵🇭', profession: 'عاملة منزلية', experienceYears: 4, age: 30, monthlySalary: 1700, isAvailable: false, joinedAt: '2024-07-01' },
-  { id: '15', nameAr: 'ويويك ساري', nationality: 'إندونيسية', nationalityFlag: '🇮🇩', profession: 'مربية أطفال', experienceYears: 5, age: 31, monthlySalary: 1600, isAvailable: true, joinedAt: '2024-06-20' },
+  makeWorker('1', 'ماريا سانتوس', 'فلبينية', '🇵🇭', ['عاملة منزلية', 'مربية أطفال'], 5, 32, 1800, false, '2024-01-15', 'مسيحية', 'عزباء', ['إنجليزي', 'تاغالوغ'], 158, 55, 'عاملة متعددة المهارات في التنظيف ورعاية الأطفال'),
+  makeWorker('2', 'روزا ديلا كروز', 'فلبينية', '🇵🇭', ['مربية أطفال'], 7, 35, 2200, false, '2024-02-01', 'مسيحية', 'متزوجة', ['إنجليزي', 'تاغالوغ'], 160, 58, 'متخصصة في رعاية الرضع والأطفال'),
+  makeWorker('3', 'سيتي نور', 'إندونيسية', '🇮🇩', ['عاملة منزلية'], 3, 28, 1500, true, '2024-03-10', 'مسلمة', 'عزباء', ['إندونيسي', 'عربي بسيط'], 155, 50, 'خبرة في التنظيف والطبخ'),
+  makeWorker('4', 'أمينة حسن', 'إثيوبية', '🇪🇹', ['رعاية مسنين', 'عاملة منزلية'], 4, 30, 1600, false, '2024-01-20', 'مسلمة', 'عزباء', ['أمهري', 'عربي'], 162, 56, 'متخصصة في رعاية كبار السن مع خبرة منزلية'),
+  makeWorker('5', 'راجيش كومار', 'هندية', '🇮🇳', ['سائق خاص'], 8, 38, 2000, false, '2024-04-05', 'هندوسي', 'متزوج', ['هندي', 'إنجليزي', 'عربي بسيط'], 175, 72, 'سائق محترف برخصة دولية'),
+  makeWorker('6', 'جوسلين مارتينيز', 'فلبينية', '🇵🇭', ['عاملة منزلية'], 6, 34, 2000, false, '2024-02-15', 'مسيحية', 'متزوجة', ['إنجليزي', 'تاغالوغ'], 157, 54, 'خبرة في المنازل الكبيرة والفلل'),
+  makeWorker('7', 'فاطمة عبدي', 'إثيوبية', '🇪🇹', ['رعاية مسنين'], 5, 31, 1700, false, '2024-03-01', 'مسلمة', 'عزباء', ['أمهري', 'عربي'], 164, 57, 'صبورة ومتفانية في رعاية المسنين'),
+  makeWorker('8', 'ديوي سوسانتي', 'إندونيسية', '🇮🇩', ['عاملة منزلية', 'مربية أطفال'], 4, 29, 1500, true, '2024-05-10', 'مسلمة', 'عزباء', ['إندونيسي', 'عربي بسيط'], 153, 48, 'تجيد الطبخ والتنظيف ورعاية الأطفال'),
+  makeWorker('9', 'آنا ريس', 'فلبينية', '🇵🇭', ['عاملة منزلية'], 3, 27, 1600, false, '2024-04-20', 'مسيحية', 'عزباء', ['إنجليزي', 'تاغالوغ'], 156, 52, 'نشيطة ودقيقة في العمل'),
+  makeWorker('10', 'سونيتا رام', 'هندية', '🇮🇳', ['مربية أطفال', 'رعاية مسنين'], 6, 33, 1900, true, '2024-06-01', 'هندوسية', 'متزوجة', ['هندي', 'إنجليزي'], 159, 55, 'خبرة في رعاية الأطفال وكبار السن'),
+  makeWorker('11', 'ليزا فرنانديز', 'فلبينية', '🇵🇭', ['عاملة منزلية'], 2, 25, 1400, true, '2024-06-15', 'مسيحية', 'عزباء', ['إنجليزي', 'تاغالوغ'], 154, 49, 'حديثة الخبرة ومتحمسة للعمل'),
+  makeWorker('12', 'هالوما عدن', 'إثيوبية', '🇪🇹', ['عاملة منزلية'], 3, 26, 1400, true, '2024-05-20', 'مسلمة', 'عزباء', ['أمهري', 'عربي بسيط'], 160, 53, 'تجيد الطبخ العربي والتنظيف'),
+  makeWorker('13', 'أحمد حسين', 'هندية', '🇮🇳', ['سائق خاص'], 10, 42, 2200, false, '2024-01-10', 'مسلم', 'متزوج', ['هندي', 'عربي', 'إنجليزي'], 178, 75, 'سائق ذو خبرة طويلة في المملكة'),
+  makeWorker('14', 'كارمن لوبيز', 'فلبينية', '🇵🇭', ['عاملة منزلية', 'مربية أطفال', 'رعاية مسنين'], 4, 30, 1700, false, '2024-07-01', 'مسيحية', 'عزباء', ['إنجليزي', 'تاغالوغ', 'عربي بسيط'], 155, 51, 'متعددة المهارات — تنظيف ورعاية أطفال ومسنين'),
+  makeWorker('15', 'ويويك ساري', 'إندونيسية', '🇮🇩', ['مربية أطفال', 'عاملة منزلية'], 5, 31, 1600, true, '2024-06-20', 'مسلمة', 'متزوجة', ['إندونيسي', 'عربي'], 156, 50, 'خبرة في رعاية الأطفال والأعمال المنزلية'),
 ];
 
 export const mockCustomers: Customer[] = [

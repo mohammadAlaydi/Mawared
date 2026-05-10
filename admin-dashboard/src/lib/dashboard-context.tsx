@@ -43,6 +43,23 @@ function saveToStorage<T>(key: string, value: T) {
   }
 }
 
+const DATA_VERSION = '2'; // bump this when mock data structure changes
+
+function clearStaleStorage() {
+  if (typeof window === 'undefined') return;
+  const stored = localStorage.getItem('mawared_data_version');
+  if (stored !== DATA_VERSION) {
+    localStorage.removeItem('mawared_orders');
+    localStorage.removeItem('mawared_workers');
+    localStorage.removeItem('mawared_services');
+    localStorage.removeItem('mawared_packages');
+    localStorage.setItem('mawared_data_version', DATA_VERSION);
+  }
+}
+
+// Run once at module load time (client only)
+clearStaleStorage();
+
 export function DashboardProvider({ children }: { children: ReactNode }) {
   const [orders, setOrders] = useState<Order[]>(() => loadFromStorage('mawared_orders', mockOrders));
   const [workers, setWorkers] = useState<Worker[]>(() => loadFromStorage('mawared_workers', mockWorkers));
