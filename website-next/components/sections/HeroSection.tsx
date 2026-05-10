@@ -32,7 +32,7 @@ export default function HeroSection() {
     <section
       id="hero"
       ref={ref}
-      className="relative min-h-screen flex items-center overflow-hidden pt-20"
+      className="relative min-h-screen flex items-center overflow-hidden pt-24 pb-16"
     >
       {/* Background Gradient */}
       <div className="absolute inset-0 bg-gradient-to-bl from-brand-50 via-surface-100 to-brand-100/30" />
@@ -52,8 +52,8 @@ export default function HeroSection() {
         }}
       />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
+      <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 w-full">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Text Content */}
           <motion.div
             initial={{ opacity: 0, x: 40 }}
@@ -66,7 +66,7 @@ export default function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: 0.2 }}
-              className="inline-flex items-center gap-2 bg-brand-100/60 backdrop-blur-sm border border-brand-200/50 rounded-full px-4 py-1.5"
+              className="inline-flex items-center gap-2 bg-brand-100/60 backdrop-blur-sm border border-brand-200/50 rounded-full px-5 py-2"
             >
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
               <span className="text-sm text-brand-800 font-medium">
@@ -75,7 +75,7 @@ export default function HeroSection() {
             </motion.div>
 
             {/* Heading */}
-            <div className="space-y-3">
+            <div className="space-y-4">
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black leading-tight text-brand-950">
                 أختر عاملتك
                 <br />
@@ -147,18 +147,18 @@ export default function HeroSection() {
             initial={{ opacity: 0, x: -40 }}
             animate={isInView ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="relative hidden lg:block"
+            className="relative hidden lg:flex justify-center"
           >
-            <div className="relative">
+            <div className="relative w-full max-w-md">
               {/* Main Image */}
-              <div className="relative w-full aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl shadow-brand-500/20">
+              <div className="relative w-full aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl shadow-brand-500/20">
                 <Image
                   src="/images/hero-worker.png"
                   alt="عاملة منزلية محترفة"
                   fill
                   className="object-cover"
                   priority
-                  sizes="(max-width: 768px) 100vw, 50vw"
+                  sizes="(max-width: 768px) 100vw, 400px"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-brand-950/40 via-transparent to-transparent" />
               </div>
@@ -168,7 +168,7 @@ export default function HeroSection() {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={isInView ? { opacity: 1, scale: 1 } : {}}
                 transition={{ delay: 0.8, type: "spring" }}
-                className="absolute -bottom-4 -right-4 glass rounded-2xl p-4 shadow-xl"
+                className="absolute -bottom-6 -right-6 glass rounded-2xl p-4 shadow-xl"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">

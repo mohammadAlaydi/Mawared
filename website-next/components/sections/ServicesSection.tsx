@@ -74,7 +74,7 @@ export default function ServicesSection() {
       <div className="absolute top-0 right-0 w-80 h-80 bg-brand-400/5 rounded-full blur-[120px]" />
       <div className="absolute bottom-0 left-0 w-80 h-80 bg-accent-400/5 rounded-full blur-[120px]" />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
