@@ -63,7 +63,7 @@ export default function Footer() {
       <div className="absolute bottom-0 right-0 w-80 h-80 bg-accent-500/10 rounded-full blur-[120px]" />
 
       {/* Main Footer */}
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">
+      <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 pt-16 pb-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8 mb-12">
           {/* Brand Column */}
           <div className="lg:col-span-2 space-y-5">

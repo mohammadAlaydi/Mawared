@@ -23,7 +23,7 @@ export default function DownloadCTASection() {
       <div className="absolute bottom-32 right-[25%] w-6 h-6 rounded-lg bg-white/5 rotate-45 animate-float" style={{ animationDelay: "2s" }} />
       <div className="absolute top-1/2 left-[70%] w-3 h-3 rounded-full bg-accent-400/20 animate-float" style={{ animationDelay: "4s" }} />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Text */}
           <motion.div

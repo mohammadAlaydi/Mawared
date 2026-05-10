@@ -62,7 +62,7 @@ export default function Navbar() {
           : "bg-transparent py-4"
       }`}
     >
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+      <nav className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 flex items-center justify-between">
         {/* Logo */}
         <a href="#hero" className="flex items-center gap-3 group">
           <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-md group-hover:shadow-brand-500/30 transition-shadow duration-300">

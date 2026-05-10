@@ -20,7 +20,7 @@ export default function ContactSection() {
       <div className="absolute inset-0 bg-white" />
       <div className="absolute top-0 left-0 w-80 h-80 bg-brand-400/5 rounded-full blur-[150px]" />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
         <div className="grid lg:grid-cols-2 gap-16">
           {/* Info Side */}
           <motion.div
