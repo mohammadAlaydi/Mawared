@@ -28,7 +28,8 @@ RUN corepack enable && corepack prepare pnpm@9.12.0 --activate
 RUN pnpm --filter @mawared/shared-types build
 WORKDIR /repo/apps/backend
 RUN pnpm prisma generate
-RUN pnpm build
+RUN npx nest build
+RUN ls -la dist/ || echo "dist/ not found — build may have failed silently"
 
 # ---- Stage 3: prod deps only ----
 FROM node:20-alpine AS prod-deps
