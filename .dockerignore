@@ -12,6 +12,7 @@
 **/coverage
 **/build
 **/out
+**/*.tsbuildinfo
 
 # Local env files (never bake secrets into images)
 **/.env

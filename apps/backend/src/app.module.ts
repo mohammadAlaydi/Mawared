@@ -23,6 +23,7 @@ import { ContractsModule } from './modules/contracts/contracts.module';
 import { FilesModule } from './modules/files/files.module';
 import { LeadsModule } from './modules/leads/leads.module';
 import { VerificationsModule } from './modules/verifications/verifications.module';
+import { PublicModule } from './modules/public/public.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { RequestContextInterceptor } from './common/interceptors/request-context.interceptor';
@@ -57,6 +58,7 @@ import { RolesGuard } from './common/guards/roles.guard';
     FilesModule,
     LeadsModule,
     VerificationsModule,
+    PublicModule,
     AdminModule,
   ],
   providers: [
@@ -67,4 +69,4 @@ import { RolesGuard } from './common/guards/roles.guard';
     { provide: APP_GUARD, useClass: RolesGuard },
   ],
 })
-export class AppModule {}
+export class Ap

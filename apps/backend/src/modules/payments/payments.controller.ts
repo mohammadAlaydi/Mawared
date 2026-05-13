@@ -6,12 +6,15 @@ import {
   Inject,
   Post,
   Req,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { CurrentUser, type AuthUser } from '@/common/decorators/current-user.decorator';
 import { Public } from '@/common/decorators/public.decorator';
 import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
+import { IdempotencyInterceptor } from '@/common/idempotency/idempotency.interceptor';
+import { Idempotent } from '@/common/idempotency/idempotent.decorator';
 import { PaymentsService } from './payments.service';
 import {
   CreatePaymentIntentDto,
@@ -21,15 +24,22 @@ import { PAYMENT_PROVIDER, type PaymentProvider } from './payment-provider';
 
 @ApiTags('payments')
 @Controller({ path: 'payments', version: '1' })
+@UseInterceptors(IdempotencyInterceptor)
 export class PaymentsController {
   constructor(
     private readonly payments: PaymentsService,
     @Inject(PAYMENT_PROVIDER) private readonly provider: PaymentProvider,
   ) {}
 
+  /**
+   * Create a Stripe PaymentIntent for an order. Idempotent: clients must pass
+   * a UUIDv4 `Idempotency-Key` header so a retried request returns the same
+   * intent instead of double-charging the customer.
+   */
   @ApiBearerAuth()
   @Post('intents')
   @HttpCode(201)
+  @Idempotent()
   async createIntent(
     @CurrentUser() user: AuthUser,
     @Body(new ZodValidationPipe(CreatePaymentIntentSchema)) body: CreatePaymentIntentDto,
@@ -47,12 +57,3 @@ export class PaymentsController {
   @HttpCode(200)
   async stripeWebhook(@Req() req: Request): Promise<{ received: true }> {
     const signature = req.headers['stripe-signature'];
-    const rawBody = (req as Request & { rawBody?: Buffer }).rawBody;
-    if (!rawBody || typeof signature !== 'string') {
-      throw new BadRequestException('missing raw body or signature header');
-    }
-    const event = this.provider.verifyWebhook(rawBody, signature);
-    await this.payments.ingestWebhook(event.providerEventId, event.type, event.payload);
-    return { received: true };
-  }
-}

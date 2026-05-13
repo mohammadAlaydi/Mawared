@@ -129,8 +129,12 @@ export class ReportsService {
     };
   }
 
-  private effectiveBranch(actor: AuthUser, requested?: string): string | undefined {
-    if (actor.role === 'BRANCH_MANAGER') return actor.branchId;
-    return requested;
-  }
-}
+  /**
+   * Single-call rollup feeding the admin dashboard homepage. Combines:
+   *  - revenue (yesterday vs day-before-yesterday delta + 30-day series)
+   *  - order counts by status
+   *  - worker availability counts
+   *  - new customer count (last 30d)
+   *  - 10 most recent orders
+   *
+   * Branch managers a
