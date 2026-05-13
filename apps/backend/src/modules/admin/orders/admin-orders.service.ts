@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { ERROR_CODES } from '@mawared/shared-types';
 import { PrismaService } from '@/shared/prisma/prisma.service';
@@ -16,8 +16,6 @@ import type { RefundOrderDto } from './dto/refund-order.dto';
 
 @Injectable()
 export class AdminOrdersService {
-  private readonly logger = new Logger(AdminOrdersService.name);
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly orders: OrdersService,

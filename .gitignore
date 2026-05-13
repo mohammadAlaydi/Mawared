@@ -18,6 +18,20 @@ dist/
 next-env.d.ts
 .turbo/
 
+# ======= Compiled TypeScript outputs (in-source) =======
+apps/backend/src/**/*.js
+apps/backend/src/**/*.js.map
+apps/backend/src/**/*.d.ts
+apps/backend/scripts/**/*.js
+apps/backend/scripts/**/*.js.map
+apps/backend/scripts/**/*.d.ts
+apps/backend/test/**/*.js
+apps/backend/test/**/*.js.map
+apps/backend/test/**/*.d.ts
+apps/backend/prisma/seed.js
+apps/backend/prisma/seed.js.map
+apps/backend/prisma/seed.d.ts
+
 # ======= Testing =======
 coverage/
 .nyc_output/

@@ -1,4 +1,4 @@
-import { Global, Injectable, Logger, Module, OnModuleInit } from '@nestjs/common';
+import { Global, Injectable, Module, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import type { Env } from '@/shared/config/env.schema';
@@ -28,7 +28,6 @@ interface Flag {
  */
 @Injectable()
 export class FeatureFlagsService implements OnModuleInit {
-  private readonly logger = new Logger(FeatureFlagsService.name);
   private static readonly CACHE_TTL_MS = 30_000;
 
   private cache = new Map<string, { flag: Flag | null; loadedAtMs: number }>();
@@ -61,11 +60,11 @@ export class FeatureFlagsService implements OnModuleInit {
   ): Promise<void> {
     await this.prisma.featureFlag.upsert({
       where: { key },
-      update: { enabled, rules: rules ?? undefined, updatedById: updatedById ?? null },
+      update: { enabled, rules: (rules ?? undefined) as object | undefined, updatedById: updatedById ?? null },
       create: {
         key,
         enabled,
-        rules: rules ?? undefined,
+        rules: (rules ?? undefined) as object | undefined,
         updatedById: updatedById ?? null,
       },
     });

@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import * as argon2 from 'argon2';
 import type Redis from 'ioredis';
 import { ERROR_CODES } from '@mawared/shared-types';
@@ -20,7 +20,6 @@ import { verifyTotp } from './totp';
  */
 @Injectable()
 export class AdminAuthService {
-  private readonly logger = new Logger(AdminAuthService.name);
   private static readonly LOCKOUT_THRESHOLD = 5;
   private static readonly LOCKOUT_TTL_SEC = 15 * 60;
 

@@ -11,7 +11,8 @@ COPY pnpm-workspace.yaml package.json ./
 COPY apps/backend/package.json ./apps/backend/
 COPY packages ./packages
 RUN corepack enable && corepack prepare pnpm@9.12.0 --activate
-RUN pnpm install --frozen-lockfile=false --filter @mawared/backend...
+# Include @mawared/shared-types explicitly so its devDeps (typescript) are installed
+RUN pnpm install --frozen-lockfile=false --filter @mawared/shared-types --filter @mawared/backend...
 
 # ---- Stage 2: build ----
 FROM node:20-alpine AS build
@@ -22,8 +23,10 @@ COPY --from=deps /repo/apps/backend/node_modules ./apps/backend/node_modules
 COPY --from=deps /repo/packages ./packages
 COPY apps/backend ./apps/backend
 COPY package.json pnpm-workspace.yaml turbo.json ./
-WORKDIR /repo/apps/backend
 RUN corepack enable && corepack prepare pnpm@9.12.0 --activate
+# Build shared-types first — its dist/ is git-ignored so must be compiled here
+RUN pnpm --filter @mawared/shared-types build
+WORKDIR /repo/apps/backend
 RUN pnpm prisma generate
 RUN pnpm build
 
@@ -46,6 +49,8 @@ ENV NODE_ENV=production \
 COPY --from=prod-deps /repo/node_modules /repo/node_modules
 COPY --from=prod-deps /repo/apps/backend/node_modules /repo/apps/backend/node_modules
 COPY --from=prod-deps /repo/packages /repo/packages
+# shared-types dist is git-ignored — copy the compiled output from the build stage
+COPY --from=build /repo/packages/shared-types/dist /repo/packages/shared-types/dist
 COPY --from=build /repo/apps/backend/dist ./dist
 COPY --from=build /repo/apps/backend/prisma ./prisma
 COPY apps/backend/package.json ./package.json

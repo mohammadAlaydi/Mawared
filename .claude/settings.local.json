@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force)",
+      "PowerShell(& \"C:\\\\laragon\\\\bin\\\\postgresql\\\\pgsql\\\\bin\\\\psql.exe\" -U postgres -c $sql 2>&1)"
+    ]
+  }
+}

@@ -27,7 +27,7 @@ export class ContractPdfService implements OnModuleDestroy {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly config: ConfigService<Env, true>,
+    config: ConfigService<Env, true>,
   ) {
     const endpoint = config.get('S3_ENDPOINT', { infer: true });
     const region = config.get('S3_REGION', { infer: true });

@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { ERROR_CODES } from '@mawared/shared-types';
-import type { NotificationType } from '@prisma/client';
+import { Prisma, type NotificationType } from '@prisma/client';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import { DeviceTokensService } from './device-tokens.service';
 import { PUSH_CHANNEL, type PushChannel } from './push-channel';
@@ -77,7 +77,7 @@ export class NotificationsService {
         channels,
         relatedOrderId: options.relatedOrderId ?? null,
         relatedContractId: options.relatedContractId ?? null,
-        data: options.data ?? null,
+        data: options.data ?? Prisma.DbNull,
       },
     });
 

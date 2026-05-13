@@ -1,0 +1,38 @@
+# Files not needed by the backend Dockerfile — keep upload small.
+node_modules/
+.next/
+dist/
+out/
+*.tsbuildinfo
+.turbo/
+coverage/
+
+# Other apps / workspaces not used by the backend build
+admin-dashboard/
+website-next/
+android/
+
+# Docs, infra scripts, brand assets
+docs/
+infra/
+brand-assets/
+commit.txt
+
+# Compiled TypeScript outputs — Railway builds from source via Dockerfile
+apps/backend/src/**/*.js
+apps/backend/src/**/*.js.map
+apps/backend/src/**/*.d.ts
+apps/backend/scripts/**/*.js
+apps/backend/scripts/**/*.js.map
+apps/backend/scripts/**/*.d.ts
+apps/backend/test/**/*.js
+apps/backend/test/**/*.js.map
+apps/backend/test/**/*.d.ts
+apps/backend/prisma/seed.js
+apps/backend/prisma/seed.js.map
+apps/backend/prisma/seed.d.ts
+
+# Local dev
+.env
+.env.local
+apps/backend/.env

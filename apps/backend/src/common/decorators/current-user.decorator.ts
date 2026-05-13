@@ -3,7 +3,7 @@ import type { Request } from 'express';
 
 export interface AuthUser {
   id: string;
-  role: 'CUSTOMER' | 'STAFF' | 'BRANCH_MANAGER' | 'SUPER_ADMIN';
+  role: 'CUSTOMER' | 'STAFF' | 'BRANCH_MANAGER' | 'SUPER_ADMIN' | 'SALES' | 'FINANCE' | 'SUPPORT';
   branchId?: string;
   audience: 'mawared-customer' | 'mawared-admin';
 }
