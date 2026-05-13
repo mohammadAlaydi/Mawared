@@ -1,0 +1,46 @@
+# =====================================================================
+# Railway configuration — Mawared backend
+#
+# This file configures the *default* service in a Railway project. We
+# deploy the backend as two services that share the same image:
+#
+#   1. api      → CMD = node dist/main.js (the default from the Dockerfile)
+#   2. worker   → Start Command overridden to: node dist/worker.js
+#
+# Both services share the same Postgres + Redis (added via the Railway
+# dashboard). See infra/runbooks/railway-deployment.md for the full
+# step-by-step.
+#
+# Reference: https://docs.railway.com/reference/config-as-code
+# =====================================================================
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "apps/backend/Dockerfile"
+
+[deploy]
+# Run Prisma migrations once per deploy, before the new container starts
+# serving traffic. Safe to run from both api + worker (idempotent), but we
+# only enable it on the api service — set this command on the worker to
+# empty string ("") in the Railway dashboard to avoid double-runs.
+preDeployCommand = "prisma migrate deploy --schema=prisma/schema.prisma"
+
+# Default start command. The api service uses this; the worker service
+# overrides it in the Railway dashboard to: node dist/worker.js
+startCommand = "node dist/main.js"
+
+# /healthz returns {"ok":true,...} once the app is up. /readyz additionally
+# verifies Postgres + Redis are reachable — we use the simpler /healthz for
+# Railway's healthcheck so deploys aren't blocked by a transient DB blip.
+healthcheckPath = "/healthz"
+healthcheckTimeout = 60
+
+# Restart on crash; cap retries so a broken deploy fails fast instead of
+# crash-looping forever.
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+# Graceful shutdown — Nest's enableShutdownHooks() honors SIGTERM.
+# Railway sends SIGTERM and waits up to this many seconds before SIGKILL.
+# 30s is plenty for draining in-flight HTTP requests + closing Prisma.
+# (Note: per-service setting, can also be set in the dashboard.)

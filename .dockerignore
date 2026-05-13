@@ -1,0 +1,57 @@
+# =====================================================================
+# Root .dockerignore — applies to all Docker builds whose context is the
+# repo root (e.g. apps/backend/Dockerfile, invoked by Railway).
+# Keep this in sync with apps/backend/.dockerignore.
+# =====================================================================
+
+# Dependency / build artifacts
+**/node_modules
+**/dist
+**/.next
+**/.turbo
+**/coverage
+**/build
+**/out
+
+# Local env files (never bake secrets into images)
+**/.env
+**/.env.*
+!**/.env.example
+
+# VCS + editor
+.git
+.gitignore
+.gitattributes
+.github
+.idea
+.vscode
+*.swp
+*.swo
+
+# Logs
+**/*.log
+**/npm-debug.log*
+**/pnpm-debug.log*
+**/yarn-debug.log*
+
+# OS junk
+**/.DS_Store
+**/Thumbs.db
+
+# Things outside the backend that bloat the build context
+android/
+brand-assets/
+docs/
+infra/runbooks/
+website-next/.next
+website-next/node_modules
+admin-dashboard/.next
+admin-dashboard/node_modules
+
+# Test artifacts
+**/test-results
+**/playwright-report
+**/.nyc_output
+
+# Misc
+*.pdf
