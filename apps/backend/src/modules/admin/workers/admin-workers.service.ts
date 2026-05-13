@@ -95,6 +95,61 @@ export class AdminWorkersService {
     });
   }
 
+  /**
+   * Bind a previously-uploaded photo FileObject to this worker.
+   * Verifies the file is READY and was uploaded for WORKER_PHOTO scope.
+   */
+  async bindPhoto(workerId: string, fileId: string, actor: AuthUser) {
+    await this.findById(workerId, actor);
+    const file = await this.prisma.fileObject.findFirst({
+      where: { id: fileId, scope: 'WORKER_PHOTO', status: 'READY', deletedAt: null },
+      select: { id: true },
+    });
+    if (!file) {
+      throw new HttpException(
+        { code: ERROR_CODES.NOT_FOUND, message: 'File not found or not finalized.' },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    return this.prisma.worker.update({
+      where: { id: workerId },
+      data: { photoFileId: fileId },
+      include: { photoFile: true },
+    });
+  }
+
+  async addDocument(
+    workerId: string,
+    input: {
+      fileId: string;
+      kind: 'PASSPORT' | 'MEDICAL_CERT' | 'POLICE_CLEARANCE' | 'OTHER';
+      expiresAt?: Date;
+      notes?: string;
+    },
+    actor: AuthUser,
+  ) {
+    await this.findById(workerId, actor);
+    const file = await this.prisma.fileObject.findFirst({
+      where: { id: input.fileId, scope: 'WORKER_DOCUMENT', status: 'READY', deletedAt: null },
+      select: { id: true },
+    });
+    if (!file) {
+      throw new HttpException(
+        { code: ERROR_CODES.NOT_FOUND, message: 'File not found or not finalized.' },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    return this.prisma.workerDocument.create({
+      data: {
+        workerId,
+        fileId: input.fileId,
+        kind: input.kind,
+        expiresAt: input.expiresAt ?? null,
+        notes: input.notes ?? null,
+      },
+    });
+  }
+
   private branchFilter(actor: AuthUser): Prisma.WorkerWhereInput {
     if (actor.role === 'BRANCH_MANAGER' && actor.branchId) {
       return { branchId: actor.branchId };

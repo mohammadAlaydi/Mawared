@@ -8,6 +8,7 @@ import { RedisModule } from './shared/redis/redis.module';
 import { SmsModule } from './shared/sms/sms.module';
 import { QueueModule } from './shared/queue/queue.module';
 import { AuditModule } from './shared/audit/audit.service';
+import { FeatureFlagsModule } from './shared/feature-flags/feature-flags.service';
 import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
@@ -36,6 +37,7 @@ import { RolesGuard } from './common/guards/roles.guard';
     SmsModule,
     QueueModule,
     AuditModule,
+    FeatureFlagsModule,
     ThrottlerModule.forRoot([
       { name: 'default', ttl: 60_000, limit: 120 },
       { name: 'auth', ttl: 60_000, limit: 10 },

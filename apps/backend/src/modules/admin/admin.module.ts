@@ -18,6 +18,7 @@ import { AdminStaffController } from './staff/admin-staff.controller';
 import { AdminAuditController } from './audit/admin-audit.controller';
 import { ReportsService } from './reports/reports.service';
 import { ReportsController } from './reports/reports.controller';
+import { AdminFlagsController } from './flags/admin-flags.controller';
 
 @Module({
   imports: [AuthModule, OrdersModule, PaymentsModule],
@@ -31,6 +32,7 @@ import { ReportsController } from './reports/reports.controller';
     AdminStaffController,
     AdminAuditController,
     ReportsController,
+    AdminFlagsController,
   ],
   providers: [
     AdminAuthService,

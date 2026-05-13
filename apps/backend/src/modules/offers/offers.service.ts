@@ -1,4 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 import { ERROR_CODES } from '@mawared/shared-types';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 
@@ -121,5 +122,31 @@ export class OffersService {
     const capped = discountMinor > context.subtotalMinor ? context.subtotalMinor : discountMinor;
 
     return { promoId: promo.id, discountMinor: capped, currency: promo.currency };
+  }
+
+  /**
+   * Persist a PromoRedemption after an order has been created with a promo
+   * applied. Called from OrdersService.create inside the same transaction
+   * so a failure rolls the order back.
+   */
+  async recordRedemption(
+    tx: Prisma.TransactionClient,
+    input: {
+      promoId: string;
+      customerId: string;
+      orderId: string;
+      discountAppliedMinor: bigint;
+      currency: string;
+    },
+  ): Promise<void> {
+    await tx.promoRedemption.create({
+      data: {
+        promoId: input.promoId,
+        customerId: input.customerId,
+        orderId: input.orderId,
+        discountAppliedMinor: input.discountAppliedMinor,
+        currency: input.currency,
+      },
+    });
   }
 }

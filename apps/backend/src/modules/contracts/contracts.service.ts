@@ -3,12 +3,16 @@ import { ERROR_CODES } from '@mawared/shared-types';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import { generateContractNumber } from './contract-number';
+import { ContractPdfService } from './contract-pdf.service';
 
 @Injectable()
 export class ContractsService {
   private readonly logger = new Logger(ContractsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly pdf: ContractPdfService,
+  ) {}
 
   /**
    * Issue a contract for a CONFIRMED order. Idempotent: if a contract
@@ -83,6 +87,13 @@ export class ContractsService {
           { orderId, contractId: created.id, contractNumber },
           'contract issued',
         );
+        // Fire-and-forget PDF render. Failures here MUST NOT break the
+        // CONFIRMED transition that triggered us.
+        queueMicrotask(() => {
+          this.pdf.generateFor(created.id).catch((err) =>
+            this.logger.warn({ err, contractId: created.id }, 'contract pdf generation failed'),
+          );
+        });
         return { id: created.id, contractNumber };
       } catch (err) {
         if (

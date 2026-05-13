@@ -49,17 +49,34 @@ export class AuthController {
   async verifyOtp(@Body() body: OtpVerifyDto, @Req() req: Request) {
     await this.otp.verify(body.phone, body.code);
 
-    // Upsert the user + customer profile.
-    const user = await this.prisma.user.upsert({
-      where: { phoneE164: body.phone },
-      update: { isActive: true },
-      create: {
-        phoneE164: body.phone,
-        role: 'CUSTOMER',
-        isActive: true,
-        customer: { create: { preferredLocale: 'ar' } },
-      },
+    // Upsert the user + customer profile. If the phone exists on a
+    // soft-deleted account, reactivate it (clear deletedAt) — see ADR-018.
+    const existing = await this.prisma.user.findFirst({
+      where: { phoneE164: body.phone, role: 'CUSTOMER' },
+      select: { id: true, deletedAt: true },
     });
+    const user = existing
+      ? await this.prisma.user.update({
+          where: { id: existing.id },
+          data: {
+            isActive: true,
+            deletedAt: null,
+            customer: {
+              upsert: {
+                create: { preferredLocale: 'ar' },
+                update: {},
+              },
+            },
+          },
+        })
+      : await this.prisma.user.create({
+          data: {
+            phoneE164: body.phone,
+            role: 'CUSTOMER',
+            isActive: true,
+            customer: { create: { preferredLocale: 'ar' } },
+          },
+        });
 
     const sessionId = await this.sessions.createOrGet(user.id, body.deviceId, body.deviceName, {
       ip: req.ip,

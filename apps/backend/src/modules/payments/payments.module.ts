@@ -5,6 +5,7 @@ import { PaymentsController } from './payments.controller';
 import { PaymentsService } from './payments.service';
 import { StubPaymentProvider } from './stub-payment.provider';
 import { StripePaymentProvider } from './stripe-payment.provider';
+import { StripeEventConsumer } from './stripe-event.consumer';
 import { PAYMENT_PROVIDER, type PaymentProvider } from './payment-provider';
 import type { Env } from '@/shared/config/env.schema';
 
@@ -38,7 +39,13 @@ const paymentProviderFactory: Provider = {
 @Module({
   imports: [OrdersModule],
   controllers: [PaymentsController],
-  providers: [PaymentsService, StubPaymentProvider, StripePaymentProvider, paymentProviderFactory],
+  providers: [
+    PaymentsService,
+    StubPaymentProvider,
+    StripePaymentProvider,
+    StripeEventConsumer,
+    paymentProviderFactory,
+  ],
   exports: [PaymentsService, PAYMENT_PROVIDER],
 })
 export class PaymentsModule {}

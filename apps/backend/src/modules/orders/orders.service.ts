@@ -4,7 +4,6 @@ import { Prisma, type AuditActorType } from '@prisma/client';
 import { createHash } from 'node:crypto';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import { OffersService } from '@/modules/offers/offers.service';
-import { NotificationsService } from '@/modules/notifications/notifications.service';
 import { templateForStatus } from '@/modules/notifications/order-notification-templates';
 import { ContractsService } from '@/modules/contracts/contracts.service';
 import { QUEUE_FACTORY, type QueueFactory } from '@/shared/queue/queue.module';
@@ -26,7 +25,6 @@ export class OrdersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly offers: OffersService,
-    private readonly notifications: NotificationsService,
     private readonly contracts: ContractsService,
     @Inject(QUEUE_FACTORY) private readonly queues: QueueFactory,
   ) {}
@@ -142,6 +140,17 @@ export class OrdersService {
           actorId: customerId,
         },
       });
+
+      // 2b. Record the promo redemption now that the order exists.
+      if (promoId && discountMinor > 0n) {
+        await this.offers.recordRedemption(tx, {
+          promoId,
+          customerId,
+          orderId: order.id,
+          discountAppliedMinor: discountMinor,
+          currency: pkg.currency,
+        });
+      }
 
       // 3. Worker availability + Reservation row (partial unique index enforces
       //    one active reservation per worker).
@@ -372,9 +381,13 @@ export class OrdersService {
     if (!order) return;
     const tpl = templateForStatus(status, order.orderNumber);
     if (!tpl) return;
-    await this.notifications.send(customerId, tpl, {
-      relatedOrderId: orderId,
-      data: { orderId, status },
+    // Enqueue rather than calling NotificationsService inline so push fanout
+    // happens off the request thread and survives transient FCM failures
+    // with BullMQ's backoff.
+    await this.queues.get(QUEUES.NOTIFICATIONS).add('send', {
+      userId: customerId,
+      template: tpl,
+      options: { relatedOrderId: orderId, data: { orderId, status } },
     });
   }
 

@@ -23,6 +23,12 @@ import {
   UpdateWorkerDto,
   UpdateWorkerSchema,
 } from './dto/worker.dto';
+import {
+  BindWorkerDocumentDto,
+  BindWorkerDocumentSchema,
+  BindWorkerPhotoDto,
+  BindWorkerPhotoSchema,
+} from './dto/worker-files.dto';
 
 @ApiTags('admin-workers')
 @ApiBearerAuth()
@@ -72,5 +78,32 @@ export class AdminWorkersController {
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
   ): Promise<void> {
     await this.workers.remove(id, actor);
+  }
+
+  /**
+   * Two-step photo upload:
+   *   1. POST /v1/files/upload-url { scope: WORKER_PHOTO } → presigned PUT
+   *   2. PUT bytes to R2
+   *   3. POST /v1/files/finalize → flips FileObject to READY
+   *   4. POST /v1/admin/workers/:id/photo { fileId } ← this endpoint
+   */
+  @Post(':id/photo')
+  @Audit({ action: 'worker.photo.bind', entityType: 'Worker' })
+  bindPhoto(
+    @CurrentUser() actor: AuthUser,
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Body(new ZodValidationPipe(BindWorkerPhotoSchema)) body: BindWorkerPhotoDto,
+  ) {
+    return this.workers.bindPhoto(id, body.fileId, actor);
+  }
+
+  @Post(':id/documents')
+  @Audit({ action: 'worker.document.add', entityType: 'Worker' })
+  addDocument(
+    @CurrentUser() actor: AuthUser,
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Body(new ZodValidationPipe(BindWorkerDocumentSchema)) body: BindWorkerDocumentDto,
+  ) {
+    return this.workers.addDocument(id, body, actor);
   }
 }

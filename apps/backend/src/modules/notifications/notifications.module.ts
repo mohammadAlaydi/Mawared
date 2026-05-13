@@ -5,6 +5,7 @@ import { NotificationsService } from './notifications.service';
 import { DeviceTokensService } from './device-tokens.service';
 import { LogPushChannel } from './log-push.channel';
 import { FcmPushChannel } from './fcm-push.channel';
+import { NotificationFanoutConsumer } from './notification-fanout.consumer';
 import { PUSH_CHANNEL, type PushChannel } from './push-channel';
 import type { Env } from '@/shared/config/env.schema';
 
@@ -37,7 +38,13 @@ const pushChannelFactory: Provider = {
 
 @Module({
   controllers: [NotificationsController],
-  providers: [NotificationsService, DeviceTokensService, LogPushChannel, pushChannelFactory],
+  providers: [
+    NotificationsService,
+    DeviceTokensService,
+    LogPushChannel,
+    NotificationFanoutConsumer,
+    pushChannelFactory,
+  ],
   exports: [NotificationsService, DeviceTokensService],
 })
 export class NotificationsModule {}
