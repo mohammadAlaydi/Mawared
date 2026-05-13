@@ -4,6 +4,8 @@
 
 Full-stack platform for domestic worker recruitment in Saudi Arabia.
 
+📊 **[Project Status](docs/PROJECT_STATUS.md)** — what's done, what's remaining, how to pick up
+
 ---
 
 ## 📁 Project Structure
