@@ -1,0 +1,113 @@
+name: backend-ci
+
+on:
+  pull_request:
+    paths:
+      - 'apps/backend/**'
+      - 'packages/**'
+      - 'pnpm-workspace.yaml'
+      - 'turbo.json'
+      - 'package.json'
+      - '.github/workflows/backend-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/backend/**'
+      - 'packages/**'
+
+concurrency:
+  group: backend-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-typecheck-unit:
+    name: lint / typecheck / unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile=false
+
+      - name: Generate Prisma client
+        working-directory: apps/backend
+        run: pnpm prisma generate
+
+      - name: Lint
+        working-directory: apps/backend
+        run: pnpm lint
+
+      - name: Typecheck
+        working-directory: apps/backend
+        run: pnpm typecheck
+
+      - name: Unit tests
+        working-directory: apps/backend
+        run: pnpm test:unit -- --reporter=default
+
+  integration:
+    name: integration tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: mawared
+          POSTGRES_PASSWORD: mawared
+          POSTGRES_DB: mawared
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U mawared"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://mawared:mawared@localhost:5432/mawared?schema=public
+      DIRECT_DATABASE_URL: postgresql://mawared:mawared@localhost:5432/mawared?schema=public
+      REDIS_URL: redis://localhost:6379
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile=false
+
+      - name: Prepare DB extensions
+        run: |
+          PGPASSWORD=mawared psql -h localhost -U mawared -d mawared \
+            -c "CREATE EXTENSION IF NOT EXISTS pgcrypto;" \
+            -c "CREATE EXTENSION IF NOT EXISTS citext;" \
+            -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;"
+
+      - name: Apply migrations
+        working-directory: apps/backend
+        run: pnpm prisma migrate deploy || pnpm prisma db push --accept-data-loss
+
+      - name: Integration tests
+        working-directory: apps/backend
+        run: pnpm test:integration -- --reporter=default

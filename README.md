@@ -10,34 +10,36 @@ Full-stack platform for domestic worker recruitment in Saudi Arabia.
 
 ```
 Mawared/
-├── android/                  # 📱 Android APK (Kotlin + Jetpack Compose)
-│   ├── app/
-│   │   └── src/main/
-│   │       ├── kotlin/com/mawared/dawliah/
-│   │       │   ├── data/          # Models & mock data
-│   │       │   ├── ui/
-│   │       │   │   ├── components/  # Reusable UI components
-│   │       │   │   ├── navigation/  # NavGraph & Screen routes
-│   │       │   │   ├── screens/     # All app screens
-│   │       │   │   └── theme/       # Colors, typography, shapes
-│   │       │   └── viewmodel/       # ViewModels (MVVM)
-│   │       └── res/
-│   │           ├── drawable/        # App images (used in-app)
-│   │           ├── mipmap-*/        # App launcher icons
-│   │           └── values/          # XML configs
-│   ├── build.gradle.kts
-│   └── AndroidCommands.md          # Build & deploy commands
-│
-├── website-next/             # 🌐 Landing Website (Next.js)
-│   ├── src/app/                    # App router pages
-│   └── public/images/              # Website images
-│
-├── brand-assets/             # 🎨 Brand Identity Assets
-│   ├── logo_asset_*.jpeg           # Logo variations & mockups
-│   └── logo_page_*.png             # Brand guideline pages
-│
-└── README.md
+├── apps/
+│   └── backend/              # ⚙️  NestJS API (Postgres, Redis, Stripe, Twilio, FCM)
+├── packages/
+│   ├── shared-types/         # Error codes, enums shared with clients
+│   └── tsconfig/             # Shared TS base configs
+├── admin-dashboard/          # 🖥️  Admin dashboard (Next.js)
+├── website-next/             # 🌐 Marketing site (Next.js)
+├── android/                  # 📱 Android customer app (Kotlin + Compose)
+├── brand-assets/             # 🎨 Brand identity assets
+├── docs/
+│   └── backend/              # 📚 PRD, architecture, schema, ADRs, state machine
+├── infra/
+│   ├── docker-compose.yml    # Local Postgres + Redis + Mailhog
+│   ├── railway.toml          # Railway deployment config
+│   └── runbooks/             # On-call + local-dev runbooks
+└── .github/workflows/        # CI: lint, typecheck, tests, OpenAPI drift
 ```
+
+### Backend quick start
+
+```bash
+pnpm install
+cp apps/backend/.env.example apps/backend/.env
+pnpm infra:up                                       # postgres + redis + mailhog
+pnpm --filter @mawared/backend prisma migrate dev
+pnpm --filter @mawared/backend prisma db seed
+pnpm backend:dev                                    # API on :3000
+```
+
+Read [`docs/backend/07-IMPLEMENTATION_GUIDE.md`](docs/backend/07-IMPLEMENTATION_GUIDE.md) before contributing.
 
 ---
 
