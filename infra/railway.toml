@@ -1,0 +1,20 @@
+# Railway service config for the Mawared backend.
+# Two services share this codebase:
+#   - api:    HTTP listener (main.ts)
+#   - worker: BullMQ consumer (worker.ts)
+# Each service overrides startCommand via the Railway dashboard.
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "apps/backend/Dockerfile"
+
+[deploy]
+healthcheckPath = "/healthz"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5
+
+# Pre-deploy: apply pending migrations from a one-off container before the
+# new app version replaces the old. Keep this OUT of main.ts so multi-replica
+# rollouts don't race.
+preDeployCommand = "cd apps/backend && pnpm prisma migrate deploy"

@@ -1,4 +1,32 @@
 {
+  "name": "mawared",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mawared International — monorepo (backend, admin, website, android)",
+  "packageManager": "pnpm@9.12.0",
+  "engines": {
+    "node": ">=20.10.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test:unit": "turbo run test:unit",
+    "test:integration": "turbo run test:integration",
+    "test:e2e": "turbo run test:e2e",
+    "backend:dev": "pnpm --filter @mawared/backend dev",
+    "backend:worker": "pnpm --filter @mawared/backend dev:worker",
+    "backend:migrate": "pnpm --filter @mawared/backend prisma:migrate",
+    "backend:seed": "pnpm --filter @mawared/backend prisma:seed",
+    "infra:up": "docker compose -f infra/docker-compose.yml up -d",
+    "infra:down": "docker compose -f infra/docker-compose.yml down"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.3",
+    "typescript": "^5.5.4"
+  },
   "dependencies": {
     "vercel": "^53.3.1"
   }

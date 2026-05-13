@@ -1,0 +1,1027 @@
+// =====================================================================
+// Mawared International — Prisma schema (v1)
+//
+// This is the first-pass production schema for the Mawared backend.
+//
+// Conventions (see 02-ARCHITECTURE.md §5 for full rationale):
+//   - UUID v4 primary keys, exposed publicly as strings.
+//   - Every money column is `BigInt` minor-units + a `currency` Char(3).
+//     Postgres CHECK (amount_minor >= 0) added via raw migration (bottom of file).
+//   - Soft delete via `deletedAt` (no Prisma middleware — explicit filters in services).
+//   - Localized text: searchable strings as separate `*_ar` / `*_en` columns;
+//     non-searchable rich text as JSON `{ ar, en? }` (typed via Zod).
+//   - Every FK has an index; composite indexes are defined to match real query shapes.
+//   - `timestamptz` everywhere; server stores UTC.
+//
+// Required Postgres extensions: pgcrypto (gen_random_uuid), citext (email),
+// pg_trgm (fuzzy search on worker names). See migrations/00_init_extensions.sql.
+//
+// NAMING NOTE: The order aggregate (a customer's request for a worker) is
+// called `Order` throughout the schema and code. Some narrative passages in
+// 01-PRD.md / 02-ARCHITECTURE.md / 04-ROADMAP.md / 05-DECISIONS.md were
+// written using `Booking` — treat them as synonyms when reading. Code,
+// schema, and API paths use `Order`.
+// =====================================================================
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearchPostgres"]
+}
+
+datasource db {
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  directUrl         = env("DIRECT_DATABASE_URL") // bypasses PgBouncer for migrations
+  extensions        = [pgcrypto, citext, pg_trgm]
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+// =====================================================================
+// ENUMS
+// =====================================================================
+
+enum UserRole {
+  CUSTOMER
+  STAFF            // operations (default staff role per spec §9)
+  SALES            // can read customers + create promos, no order transitions
+  FINANCE          // can read payments + issue refunds; no worker/customer edits
+  SUPPORT          // can view orders + contact customers; no edits
+  BRANCH_MANAGER   // scoped to one branch
+  SUPER_ADMIN
+}
+
+enum WorkerProfession {
+  DOMESTIC_WORKER
+  DRIVER
+  CAREGIVER_ELDERLY
+  CAREGIVER_CHILD
+}
+
+enum WorkerAvailability {
+  AVAILABLE
+  RESERVED
+  BOOKED
+  ARCHIVED
+}
+
+enum PackageType {
+  HOURLY
+  MONTHLY
+}
+
+enum OrderStatus {
+  DRAFT
+  RESERVED            // worker held for this customer (15-min lock)
+  PAYMENT_PENDING     // payment intent created, awaiting capture
+  PAYMENT_FAILED      // last attempt failed; customer can retry within window
+  PAID                // funds captured
+  UNDER_REVIEW        // staff reviewing before confirmation
+  CONFIRMED           // staff confirmed; contract being prepared
+  IN_PROGRESS         // worker en route / serving
+  COMPLETED           // service delivered
+  CANCELLED           // cancelled (by customer, staff, or system)
+  REFUNDED            // fully refunded
+}
+
+enum OrderCancelReason {
+  CUSTOMER_REQUEST
+  PAYMENT_TIMEOUT
+  STAFF_DECISION
+  WORKER_UNAVAILABLE
+  SYSTEM_TIMEOUT
+}
+
+enum PaymentStatus {
+  REQUIRES_PAYMENT_METHOD
+  REQUIRES_CONFIRMATION
+  REQUIRES_ACTION
+  PROCESSING
+  SUCCEEDED
+  CANCELED
+  FAILED
+}
+
+enum ContractStatus {
+  ACTIVE
+  EXPIRED
+  PENDING_RENEWAL
+  VOIDED
+}
+
+enum NotificationType {
+  ORDER_UPDATE
+  PAYMENT
+  PROMOTION
+  SYSTEM
+  CONTRACT
+}
+
+enum NotificationChannel {
+  PUSH
+  IN_APP
+  EMAIL
+  SMS
+}
+
+enum DevicePlatform {
+  ANDROID
+  IOS
+  WEB
+}
+
+enum AuditActorType {
+  SYSTEM
+  CUSTOMER
+  STAFF
+}
+
+enum FileStatus {
+  PENDING
+  READY
+  DELETED
+}
+
+enum FileScope {
+  WORKER_PHOTO
+  WORKER_DOCUMENT
+  CUSTOMER_ID
+  CONTRACT_PDF
+  BRANCH_PHOTO
+  SERVICE_ICON
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  CLOSED_WON
+  CLOSED_LOST
+  SPAM
+}
+
+/// Signit.sa identity verification status, mirroring the labels in the
+/// product spec (§3 of the feature list).
+enum VerificationStatus {
+  NOT_VERIFIED        // never attempted
+  PENDING             // Signit session initiated, awaiting completion / callback
+  VERIFIED            // valid until `verificationExpiresAt`
+  FAILED              // explicitly failed (mismatched ID, expired doc, etc.)
+  EXPIRED             // was VERIFIED but past expiry — requires re-verification
+}
+
+/// Each call to the Signit provider creates one row. Append-only audit
+/// log; the latest row for a customer drives `Customer.verificationStatus`.
+enum VerificationProvider {
+  SIGNIT
+  MANUAL              // staff-overridden via admin dashboard
+}
+
+// =====================================================================
+// CORE IDENTITY
+// =====================================================================
+
+/// The base User entity. One row per authenticated principal.
+/// Customers and admin staff are both Users; their role determines the relation.
+model User {
+  id          String    @id @default(uuid()) @db.Uuid
+  role        UserRole
+  phoneE164   String?   @unique             // null for STAFF (email login); required for CUSTOMER
+  email       String?   @unique @db.Citext  // null for CUSTOMER; required for STAFF
+  passwordHash String?                       // argon2id, null for OTP-only users
+  totpSecret  String?                       // null until 2FA enrolled
+  totpEnabled Boolean   @default(false)
+  isActive    Boolean   @default(true)
+  branchId    String?   @db.Uuid            // staff scoping
+  branch      Branch?   @relation(fields: [branchId], references: [id], onDelete: Restrict)
+
+  customer    Customer?
+  staffProfile StaffProfile?
+
+  sessions       Session[]
+  refreshTokens  RefreshToken[]
+  deviceTokens   DeviceToken[]
+  notifications  Notification[]
+  auditLogs      AuditLog[]      @relation("AuditLogActor")
+  createdOrders  Order[]         @relation("OrderCreatedBy")
+
+  createdAt   DateTime  @default(now()) @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @db.Timestamptz
+  deletedAt   DateTime? @db.Timestamptz
+
+  @@index([deletedAt])
+  @@index([role, branchId])
+}
+
+/// Customer-specific profile. 1:1 with User where User.role = CUSTOMER.
+model Customer {
+  userId        String     @id @db.Uuid
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  firstName     String?
+  lastName      String?
+  preferredLocale String   @default("ar")          // "ar" | "en"
+  notificationPrefs Json   @default("{\"push\":true,\"email\":false,\"sms\":false}")
+
+  // Signit.sa identity verification status. Customers must reach VERIFIED
+  // before they can place a worker order. See VerificationStatus.
+  verificationStatus VerificationStatus @default(NOT_VERIFIED)
+  verificationLastCheckedAt DateTime? @db.Timestamptz
+  verificationExpiresAt     DateTime? @db.Timestamptz
+  verifications IdentityVerification[]
+
+  addresses     Address[]
+  favorites     Favorite[]
+  orders        Order[]
+  reservations  Reservation[]
+  promoRedemptions PromoRedemption[]
+
+  createdAt     DateTime   @default(now()) @db.Timestamptz
+  updatedAt     DateTime   @updatedAt @db.Timestamptz
+}
+
+/// Staff-specific profile. 1:1 with User where role != CUSTOMER.
+model StaffProfile {
+  userId       String   @id @db.Uuid
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  firstName    String
+  lastName     String
+  title        String?
+
+  createdAt    DateTime @default(now()) @db.Timestamptz
+  updatedAt    DateTime @updatedAt @db.Timestamptz
+}
+
+// =====================================================================
+// AUTH — sessions, refresh tokens, OTP audit
+// =====================================================================
+
+/// A logical session = one device sign-in. Holds the most recent refresh
+/// token of its family. Revoking a session revokes the whole family.
+model Session {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @db.Uuid
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceId    String                                   // client-generated UUID, persisted in Keystore/Keychain
+  deviceName  String?                                  // "Pixel 8", "Chrome / macOS"
+  ipAddress   String?
+  userAgent   String?
+  lastSeenAt  DateTime  @default(now()) @db.Timestamptz
+  revokedAt   DateTime? @db.Timestamptz
+
+  refreshTokens RefreshToken[]
+
+  createdAt   DateTime  @default(now()) @db.Timestamptz
+
+  @@unique([userId, deviceId])
+  @@index([userId, revokedAt])
+}
+
+/// Refresh token rotation family. Each refresh issues a new token with
+/// parentId set; presenting an already-rotated token triggers
+/// family-wide revocation (theft detection).
+model RefreshToken {
+  id          String    @id @default(uuid()) @db.Uuid
+  sessionId   String    @db.Uuid
+  session     Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId      String    @db.Uuid
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash   String    @unique                       // SHA-256 of the opaque token
+  family      String    @db.Uuid                       // shared across the rotation chain
+  parentId    String?   @db.Uuid                       // previous token in chain
+  rotatedAt   DateTime? @db.Timestamptz                // set when this token was used to mint a new one
+  revokedAt   DateTime? @db.Timestamptz
+  expiresAt   DateTime  @db.Timestamptz
+  ipAddress   String?
+  userAgent   String?
+
+  createdAt   DateTime  @default(now()) @db.Timestamptz
+
+  @@index([userId])
+  @@index([family])
+  @@index([expiresAt])
+}
+
+/// Audit trail of OTP send/verify attempts (the OTP value itself lives
+/// in Redis with TTL; this table is for rate-limit and forensics).
+model OtpAttempt {
+  id          String   @id @default(uuid()) @db.Uuid
+  phoneE164   String
+  ipAddress   String?
+  outcome     String   // "SENT" | "VERIFIED" | "INVALID" | "EXPIRED" | "RATE_LIMITED"
+  createdAt   DateTime @default(now()) @db.Timestamptz
+
+  @@index([phoneE164, createdAt])
+  @@index([ipAddress, createdAt])
+}
+
+// =====================================================================
+// BRANCHES, ADDRESSES
+// =====================================================================
+
+model Branch {
+  id             String   @id @default(uuid()) @db.Uuid
+  code           String   @unique               // human-friendly e.g. "RUH-01"
+  nameAr         String
+  nameEn         String?
+  city           String
+  district       String?
+  phoneE164      String
+  whatsappE164   String?                          // optional WhatsApp Business number for click-to-chat
+  workingHoursAr String                           // "8:00ص - 11:00م"
+  workingHoursEn String?
+  latitude       Decimal  @db.Decimal(10, 7)
+  longitude      Decimal  @db.Decimal(10, 7)
+  photoUrl       String?
+  isActive       Boolean  @default(true)
+
+  staff   User[]
+  workers Worker[]
+  orders  Order[]
+
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+  deletedAt DateTime? @db.Timestamptz
+
+  @@index([city, isActive])
+  @@index([deletedAt])
+}
+
+model Address {
+  id              String   @id @default(uuid()) @db.Uuid
+  customerId      String   @db.Uuid
+  customer        Customer @relation(fields: [customerId], references: [userId], onDelete: Cascade)
+  label           String                                  // "Home", "Office", "Mom's place"
+  city            String
+  district        String
+  street          String
+  buildingNumber  String
+  additionalNotes String?
+  latitude        Decimal? @db.Decimal(10, 7)
+  longitude       Decimal? @db.Decimal(10, 7)
+  isDefault       Boolean  @default(false)
+
+  orders          Order[]
+
+  createdAt DateTime  @default(now()) @db.Timestamptz
+  updatedAt DateTime  @updatedAt @db.Timestamptz
+  deletedAt DateTime? @db.Timestamptz
+
+  @@index([customerId, deletedAt])
+}
+
+// =====================================================================
+// LOOKUPS (admin-editable)
+// =====================================================================
+
+model Nationality {
+  id        String   @id @default(uuid()) @db.Uuid
+  code      String   @unique               // ISO 3166-1 alpha-2 (e.g. "PH", "ET")
+  nameAr    String
+  nameEn    String
+  flagEmoji String
+
+  workers   Worker[]
+
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+}
+
+model Language {
+  id     String @id @default(uuid()) @db.Uuid
+  code   String @unique                       // "ar", "en", "tl", "ur", "am", "id"
+  nameAr String
+  nameEn String
+
+  workers WorkerLanguage[]
+}
+
+model Skill {
+  id     String @id @default(uuid()) @db.Uuid
+  slug   String @unique                       // "cooking", "ironing", "child_care"
+  nameAr String
+  nameEn String
+
+  workers WorkerSkill[]
+}
+
+// =====================================================================
+// WORKERS (CV)
+// =====================================================================
+
+model Worker {
+  id                String              @id @default(uuid()) @db.Uuid
+  branchId          String              @db.Uuid
+  branch            Branch              @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  nationalityId     String              @db.Uuid
+  nationality       Nationality         @relation(fields: [nationalityId], references: [id], onDelete: Restrict)
+
+  fullNameAr        String
+  fullNameEn        String?
+  profession        WorkerProfession
+  ageYears          Int
+  experienceYears   Int
+  bioAr             String                                   // rich text Arabic
+  bioEn             String?
+  rating            Decimal             @default(4.0) @db.Decimal(2, 1)   // 0.0 — 5.0
+  reviewCount       Int                 @default(0)
+
+  // Pricing snapshot — actual transactable price comes from ServicePackage at order time.
+  monthlySalaryMinor BigInt                                 // SAR halalas (e.g. 150000 = 1500 SAR)
+  currency           String              @default("SAR") @db.Char(3)
+
+  availability      WorkerAvailability  @default(AVAILABLE)
+  photoFileId       String?             @db.Uuid
+  photoFile         FileObject?         @relation("WorkerPhoto", fields: [photoFileId], references: [id], onDelete: SetNull)
+
+  languages         WorkerLanguage[]
+  skills            WorkerSkill[]
+  documents         WorkerDocument[]
+  favorites         Favorite[]
+  reservations      Reservation[]
+  orders            Order[]
+  contracts         Contract[]
+
+  createdAt DateTime  @default(now()) @db.Timestamptz
+  updatedAt DateTime  @updatedAt @db.Timestamptz
+  deletedAt DateTime? @db.Timestamptz
+
+  // High-value composite indexes — matched to actual search queries.
+  @@index([availability, profession, nationalityId])
+  @@index([branchId, availability])
+  @@index([profession, monthlySalaryMinor])
+  @@index([deletedAt])
+  // pg_trgm GIN index on fullNameAr added via raw migration (see bottom).
+}
+
+model WorkerLanguage {
+  workerId   String   @db.Uuid
+  worker     Worker   @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  languageId String   @db.Uuid
+  language   Language @relation(fields: [languageId], references: [id], onDelete: Restrict)
+  proficiency String  @default("BASIC")  // BASIC | INTERMEDIATE | FLUENT | NATIVE
+
+  @@id([workerId, languageId])
+  @@index([languageId])
+}
+
+model WorkerSkill {
+  workerId String @db.Uuid
+  worker   Worker @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  skillId  String @db.Uuid
+  skill    Skill  @relation(fields: [skillId], references: [id], onDelete: Restrict)
+
+  @@id([workerId, skillId])
+  @@index([skillId])
+}
+
+/// Supporting documents for a worker (passport, medical cert, etc.).
+model WorkerDocument {
+  id          String   @id @default(uuid()) @db.Uuid
+  workerId    String   @db.Uuid
+  worker      Worker   @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  kind        String                                 // "PASSPORT" | "MEDICAL_CERT" | "POLICE_CLEARANCE" | "OTHER"
+  fileId      String   @db.Uuid
+  file        FileObject @relation("WorkerDocFile", fields: [fileId], references: [id], onDelete: Restrict)
+  expiresAt   DateTime? @db.Timestamptz
+  notes       String?
+
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+
+  @@index([workerId])
+}
+
+model Favorite {
+  customerId String   @db.Uuid
+  customer   Customer @relation(fields: [customerId], references: [userId], onDelete: Cascade)
+  workerId   String   @db.Uuid
+  worker     Worker   @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now()) @db.Timestamptz
+
+  @@id([customerId, workerId])
+  @@index([workerId])
+}
+
+// =====================================================================
+// CATALOG — services & packages
+// =====================================================================
+
+model ServiceCategory {
+  id            String   @id @default(uuid()) @db.Uuid
+  slug          String   @unique
+  nameAr        String
+  nameEn        String?
+  descriptionAr String?
+  descriptionEn String?
+  profession    WorkerProfession
+  iconFileId    String?  @db.Uuid
+  iconFile      FileObject? @relation("ServiceIcon", fields: [iconFileId], references: [id], onDelete: SetNull)
+  displayOrder  Int      @default(0)
+  isActive      Boolean  @default(true)
+
+  packages      ServicePackage[]
+
+  createdAt DateTime  @default(now()) @db.Timestamptz
+  updatedAt DateTime  @updatedAt @db.Timestamptz
+  deletedAt DateTime? @db.Timestamptz
+
+  @@index([isActive, displayOrder])
+}
+
+model ServicePackage {
+  id            String           @id @default(uuid()) @db.Uuid
+  serviceId     String           @db.Uuid
+  service       ServiceCategory  @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  nameAr        String
+  nameEn        String?
+  descriptionAr String?
+  descriptionEn String?
+  type          PackageType
+  durationValue Int
+  durationUnit  String                                 // "HOUR" | "DAY" | "WEEK" | "MONTH"
+  priceMinor    BigInt
+  currency      String           @default("SAR") @db.Char(3)
+  vatRatePpm    Int              @default(150000)        // 15% in ppm (parts per million)
+  features      Json             @default("[]")           // [{ar,en}, ...]
+  isPopular     Boolean          @default(false)
+  isActive      Boolean          @default(true)
+
+  orders        Order[]
+
+  createdAt DateTime  @default(now()) @db.Timestamptz
+  updatedAt DateTime  @updatedAt @db.Timestamptz
+  deletedAt DateTime? @db.Timestamptz
+
+  @@index([serviceId, isActive])
+}
+
+// =====================================================================
+// PROMOS
+// =====================================================================
+
+model PromoCode {
+  id              String   @id @default(uuid()) @db.Uuid
+  code            String   @unique                  // uppercased, e.g. "WELCOME10"
+  titleAr         String
+  titleEn         String?
+  descriptionAr   String?
+  descriptionEn   String?
+  discountPercent Int?                              // 0..100; mutex with discountMinor
+  discountMinor   BigInt?
+  currency        String   @default("SAR") @db.Char(3)
+  maxUsesTotal    Int?                              // null = unlimited
+  maxUsesPerUser  Int      @default(1)
+  minOrderMinor   BigInt   @default(0)
+  validFrom       DateTime @db.Timestamptz
+  validUntil      DateTime @db.Timestamptz
+  isActive        Boolean  @default(true)
+
+  redemptions     PromoRedemption[]
+  orders          Order[]
+
+  createdAt DateTime  @default(now()) @db.Timestamptz
+  updatedAt DateTime  @updatedAt @db.Timestamptz
+  deletedAt DateTime? @db.Timestamptz
+
+  @@index([isActive, validFrom, validUntil])
+}
+
+model PromoRedemption {
+  id          String     @id @default(uuid()) @db.Uuid
+  promoId     String     @db.Uuid
+  promo       PromoCode  @relation(fields: [promoId], references: [id], onDelete: Restrict)
+  customerId  String     @db.Uuid
+  customer    Customer   @relation(fields: [customerId], references: [userId], onDelete: Cascade)
+  orderId     String     @db.Uuid @unique
+  order       Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  discountAppliedMinor BigInt
+  currency    String     @db.Char(3)
+
+  createdAt   DateTime @default(now()) @db.Timestamptz
+
+  @@unique([promoId, customerId, orderId])
+  @@index([customerId])
+}
+
+// =====================================================================
+// RESERVATIONS — 15-minute worker hold
+// =====================================================================
+
+/// A short-lived hold on a worker during checkout. Guarded by a Postgres
+/// advisory lock on the workerId so two customers can't reserve the same
+/// worker simultaneously. Expired rows are swept by a BullMQ delayed job.
+model Reservation {
+  id          String   @id @default(uuid()) @db.Uuid
+  workerId    String   @db.Uuid
+  worker      Worker   @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  customerId  String   @db.Uuid
+  customer    Customer @relation(fields: [customerId], references: [userId], onDelete: Cascade)
+  orderId     String?  @db.Uuid @unique              // set when promoted to Order
+  order       Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  expiresAt   DateTime @db.Timestamptz
+  releasedAt  DateTime? @db.Timestamptz              // explicit release on payment fail / cancel
+
+  createdAt   DateTime @default(now()) @db.Timestamptz
+
+  // At most one active (unreleased, unexpired) reservation per worker —
+  // enforced as a partial unique index in raw migration.
+  @@index([workerId, expiresAt])
+  @@index([customerId, expiresAt])
+}
+
+// =====================================================================
+// ORDERS — the order aggregate (customer's request for a worker)
+// =====================================================================
+
+model Order {
+  id              String        @id @default(uuid()) @db.Uuid
+  orderNumber     String        @unique               // human-readable, e.g. "MAW-2026-00012345"
+  customerId      String        @db.Uuid
+  customer        Customer      @relation(fields: [customerId], references: [userId], onDelete: Restrict)
+  workerId        String?       @db.Uuid             // nullable for "match-me" flows; populated on confirm
+  worker          Worker?       @relation(fields: [workerId], references: [id], onDelete: Restrict)
+  packageId       String        @db.Uuid
+  package         ServicePackage @relation(fields: [packageId], references: [id], onDelete: Restrict)
+  addressId       String        @db.Uuid
+  address         Address       @relation(fields: [addressId], references: [id], onDelete: Restrict)
+  branchId        String        @db.Uuid             // denormalized for branch-scoped queries
+  branch          Branch        @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  promoId         String?       @db.Uuid
+  promo           PromoCode?    @relation(fields: [promoId], references: [id], onDelete: SetNull)
+  promoRedemption PromoRedemption?
+
+  status          OrderStatus   @default(DRAFT)
+  cancelReason    OrderCancelReason?
+  cancelNote      String?
+
+  // Money snapshot — copied from package + promo at create time. Never re-derived.
+  subtotalMinor   BigInt                             // package.priceMinor
+  discountMinor   BigInt        @default(0)
+  vatMinor        BigInt                             // computed from (subtotal-discount) * vatRatePpm/1e6
+  totalMinor      BigInt                             // subtotal - discount + vat
+  currency        String        @db.Char(3)
+
+  notes           String?
+  placedAt        DateTime?     @db.Timestamptz       // moves from DRAFT → first stable state
+  confirmedAt     DateTime?     @db.Timestamptz
+  completedAt     DateTime?     @db.Timestamptz
+  cancelledAt     DateTime?     @db.Timestamptz
+
+  createdById     String?       @db.Uuid              // User who initiated (customer in app; staff if manual)
+  createdBy       User?         @relation("OrderCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  reservation     Reservation?
+  statusHistory   OrderStatusHistory[]
+  paymentIntents  PaymentIntent[]
+  refunds         Refund[]
+  contract        Contract?
+
+  createdAt DateTime  @default(now()) @db.Timestamptz
+  updatedAt DateTime  @updatedAt @db.Timestamptz
+  deletedAt DateTime? @db.Timestamptz
+
+  @@index([customerId, status, createdAt(sort: Desc)])
+  @@index([branchId, status, createdAt(sort: Desc)])
+  @@index([workerId, status])
+  @@index([status, createdAt(sort: Desc)])
+  @@index([deletedAt])
+}
+
+model OrderStatusHistory {
+  id         String        @id @default(uuid()) @db.Uuid
+  orderId    String        @db.Uuid
+  order      Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  fromStatus OrderStatus?
+  toStatus   OrderStatus
+  actorType  AuditActorType
+  actorId    String?       @db.Uuid
+  note       String?
+  metadata   Json?
+
+  createdAt  DateTime      @default(now()) @db.Timestamptz
+
+  @@index([orderId, createdAt])
+}
+
+// =====================================================================
+// PAYMENTS — Stripe-backed
+// =====================================================================
+
+model PaymentIntent {
+  id                String        @id @default(uuid()) @db.Uuid
+  orderId           String        @db.Uuid
+  order             Order         @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  stripeIntentId    String        @unique             // pi_...
+  stripeClientSecret String?                          // returned to client; cleared after success
+  status            PaymentStatus
+  amountMinor       BigInt
+  currency          String        @db.Char(3)
+  paymentMethodType String?                           // "card" | "apple_pay" | ...
+  lastErrorCode     String?
+  lastErrorMessage  String?
+  succeededAt       DateTime?     @db.Timestamptz
+  canceledAt        DateTime?     @db.Timestamptz
+
+  createdAt DateTime  @default(now()) @db.Timestamptz
+  updatedAt DateTime  @updatedAt @db.Timestamptz
+
+  @@index([orderId, status])
+  @@index([status, createdAt])
+}
+
+model Refund {
+  id              String   @id @default(uuid()) @db.Uuid
+  orderId         String   @db.Uuid
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  paymentIntentId String?  @db.Uuid                // soft-links to the PI that funded the order
+  stripeRefundId  String   @unique
+  amountMinor     BigInt
+  currency        String   @db.Char(3)
+  reason          String?                            // free text or canonical code
+  initiatedById   String?  @db.Uuid                  // staff user who triggered
+  status          String                              // mirrors Stripe: PENDING | SUCCEEDED | FAILED | CANCELED
+  failureReason   String?
+  succeededAt     DateTime? @db.Timestamptz
+
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+
+  @@index([orderId])
+  @@index([status])
+}
+
+/// Idempotency table for Stripe webhook events. Insert-only.
+/// Unique on stripeEventId prevents duplicate processing.
+model StripeEvent {
+  id            String   @id @default(uuid()) @db.Uuid
+  stripeEventId String   @unique
+  type          String
+  payload       Json
+  receivedAt    DateTime @default(now()) @db.Timestamptz
+  processedAt   DateTime? @db.Timestamptz
+  processingErrors Int    @default(0)
+  lastError     String?
+
+  @@index([type, receivedAt])
+  @@index([processedAt])
+}
+
+// =====================================================================
+// CONTRACTS
+// =====================================================================
+
+model Contract {
+  id              String         @id @default(uuid()) @db.Uuid
+  contractNumber  String         @unique               // "MAW-CON-2026-00000123"
+  orderId         String         @db.Uuid @unique
+  order           Order          @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  workerId        String         @db.Uuid
+  worker          Worker         @relation(fields: [workerId], references: [id], onDelete: Restrict)
+
+  status          ContractStatus
+  startDate       DateTime       @db.Date
+  endDate         DateTime       @db.Date
+  monthlySalaryMinor BigInt
+  currency        String         @db.Char(3)
+
+  pdfFileId       String?        @db.Uuid
+  pdfFile         FileObject?    @relation("ContractPdf", fields: [pdfFileId], references: [id], onDelete: SetNull)
+  pdfVersion      Int            @default(1)
+
+  voidedAt        DateTime?      @db.Timestamptz
+  voidReason      String?
+
+  createdAt DateTime  @default(now()) @db.Timestamptz
+  updatedAt DateTime  @updatedAt @db.Timestamptz
+  deletedAt DateTime? @db.Timestamptz
+
+  @@index([status, endDate])
+  @@index([workerId, status])
+}
+
+// =====================================================================
+// NOTIFICATIONS & DEVICES
+// =====================================================================
+
+model Notification {
+  id              String              @id @default(uuid()) @db.Uuid
+  userId          String              @db.Uuid
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type            NotificationType
+  titleAr         String
+  titleEn         String?
+  bodyAr          String
+  bodyEn          String?
+  channels        NotificationChannel[]
+  relatedOrderId  String?             @db.Uuid
+  relatedContractId String?           @db.Uuid
+  data            Json?                                // deep-link payload
+  readAt          DateTime?           @db.Timestamptz
+
+  createdAt DateTime @default(now()) @db.Timestamptz
+
+  @@index([userId, readAt, createdAt(sort: Desc)])
+  @@index([userId, type, createdAt(sort: Desc)])
+}
+
+model DeviceToken {
+  id          String         @id @default(uuid()) @db.Uuid
+  userId      String         @db.Uuid
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token       String         @unique
+  platform    DevicePlatform
+  appVersion  String?
+  locale      String?                                  // "ar" | "en"
+  lastSeenAt  DateTime       @default(now()) @db.Timestamptz
+
+  createdAt DateTime  @default(now()) @db.Timestamptz
+  deletedAt DateTime? @db.Timestamptz
+
+  @@index([userId, deletedAt])
+}
+
+// =====================================================================
+// FILES
+// =====================================================================
+
+model FileObject {
+  id          String     @id @default(uuid()) @db.Uuid
+  scope       FileScope
+  bucket      String                                   // R2/S3 bucket
+  key         String                                   // path inside bucket
+  mimeType    String
+  sizeBytes   Int
+  checksum    String?                                  // sha256 hex
+  status      FileStatus  @default(PENDING)
+  uploadedById String?    @db.Uuid                      // who created the upload URL
+  meta        Json?                                    // EXIF, page count, etc.
+
+  workerPhotos    Worker[]          @relation("WorkerPhoto")
+  workerDocs      WorkerDocument[]  @relation("WorkerDocFile")
+  contractPdfs    Contract[]        @relation("ContractPdf")
+  serviceIcons    ServiceCategory[] @relation("ServiceIcon")
+
+  createdAt DateTime  @default(now()) @db.Timestamptz
+  updatedAt DateTime  @updatedAt @db.Timestamptz
+  deletedAt DateTime? @db.Timestamptz
+
+  @@unique([bucket, key])
+  @@index([scope, status])
+}
+
+// =====================================================================
+// IDEMPOTENCY
+// =====================================================================
+
+/// Stripe-style idempotency keys for write endpoints. Keyed by (key, userId)
+/// so two different users can use the same uuid without colliding.
+model IdempotencyKey {
+  key          String
+  userId       String   @db.Uuid
+  requestHash  String                                   // sha256 of normalized request body
+  responseBody Json
+  statusCode   Int
+  createdAt    DateTime @default(now()) @db.Timestamptz
+  expiresAt    DateTime @db.Timestamptz                  // now() + 24h
+
+  @@id([key, userId])
+  @@index([expiresAt])
+}
+
+// =====================================================================
+// AUDIT LOG
+// =====================================================================
+
+model AuditLog {
+  id          String         @id @default(uuid()) @db.Uuid
+  actorType   AuditActorType
+  actorId     String?        @db.Uuid
+  actor       User?          @relation("AuditLogActor", fields: [actorId], references: [id], onDelete: SetNull)
+  action      String                                       // "order.cancel" | "promo.deactivate" | ...
+  entityType  String
+  entityId    String         @db.Uuid
+  before      Json?
+  after       Json?
+  requestId   String?
+  ipAddress   String?
+  userAgent   String?
+
+  createdAt DateTime @default(now()) @db.Timestamptz
+
+  @@index([entityType, entityId])
+  @@index([actorId, createdAt])
+  @@index([action, createdAt])
+}
+
+// =====================================================================
+// FEATURE FLAGS
+// =====================================================================
+
+model FeatureFlag {
+  key         String   @id                                 // "new_search_ranking"
+  description String?
+  enabled     Boolean  @default(false)
+  rules       Json?                                         // optional per-user/role rules
+  updatedById String?  @db.Uuid
+
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+}
+
+// =====================================================================
+// IDENTITY VERIFICATION (Signit.sa)
+// =====================================================================
+
+/// One row per verification attempt. The latest non-null `completedAt`
+/// row drives Customer.verificationStatus + expiresAt. We keep history
+/// for compliance (PDPL-style).
+model IdentityVerification {
+  id              String               @id @default(uuid()) @db.Uuid
+  customerId      String               @db.Uuid
+  customer        Customer             @relation(fields: [customerId], references: [userId], onDelete: Cascade)
+  provider        VerificationProvider @default(SIGNIT)
+  providerSessionId String?            @unique           // signit transaction id
+  status          VerificationStatus
+  redirectUrl     String?                                // URL we send the customer to
+  callbackPayload Json?                                  // raw provider webhook body for audit
+  failureReason   String?
+  initiatedAt     DateTime             @default(now()) @db.Timestamptz
+  completedAt     DateTime?            @db.Timestamptz
+  expiresAt       DateTime?            @db.Timestamptz   // when this verification stops counting as VERIFIED
+
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+
+  @@index([customerId, completedAt(sort: Desc)])
+  @@index([status, expiresAt])
+}
+
+// =====================================================================
+// WEBSITE LEADS (no-auth contact form)
+// =====================================================================
+
+model Lead {
+  id          String     @id @default(uuid()) @db.Uuid
+  fullName    String
+  phoneE164   String
+  email       String?    @db.Citext
+  message     String
+  source      String?                                       // utm_source / referrer
+  ipAddress   String?
+  userAgent   String?
+  status      LeadStatus @default(NEW)
+  assignedToId String?   @db.Uuid
+
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+
+  @@index([status, createdAt(sort: Desc)])
+  @@index([phoneE164])
+}
+
+// =====================================================================
+// POST-MIGRATION RAW SQL (not expressible in Prisma schema)
+//
+// These must be added via prisma/migrations/<timestamp>_constraints/migration.sql
+// after `prisma migrate dev` generates the initial schema. Listed here so the
+// invariants are visible in one place.
+//
+// -- Money invariants (every money column ≥ 0)
+// ALTER TABLE "Order"          ADD CONSTRAINT order_amounts_nonneg
+//   CHECK ("subtotalMinor" >= 0 AND "discountMinor" >= 0 AND "vatMinor" >= 0 AND "totalMinor" >= 0);
+// ALTER TABLE "PaymentIntent"  ADD CONSTRAINT pi_amount_nonneg CHECK ("amountMinor" >= 0);
+// ALTER TABLE "Refund"         ADD CONSTRAINT refund_amount_nonneg CHECK ("amountMinor" >= 0);
+// ALTER TABLE "ServicePackage" ADD CONSTRAINT pkg_price_nonneg CHECK ("priceMinor" >= 0);
+// ALTER TABLE "Worker"         ADD CONSTRAINT worker_salary_nonneg CHECK ("monthlySalaryMinor" >= 0);
+// ALTER TABLE "PromoCode"      ADD CONSTRAINT promo_discount_xor
+//   CHECK ((("discountPercent" IS NOT NULL)::int + ("discountMinor" IS NOT NULL)::int) = 1);
+//
+// -- Currency must be ISO 4217 uppercase
+// ALTER TABLE "Order"          ADD CONSTRAINT order_currency_iso    CHECK (currency ~ '^[A-Z]{3}$');
+// ALTER TABLE "ServicePackage" ADD CONSTRAINT pkg_currency_iso      CHECK (currency ~ '^[A-Z]{3}$');
+// -- (repeat for every money table)
+//
+// -- Phone numbers must be E.164
+// ALTER TABLE "User" ADD CONSTRAINT user_phone_e164
+//   CHECK ("phoneE164" IS NULL OR "phoneE164" ~ '^\+[1-9][0-9]{6,14}$');
+//
+// -- One active reservation per worker (partial unique index)
+// CREATE UNIQUE INDEX reservation_one_active_per_worker
+//   ON "Reservation" ("workerId")
+//   WHERE "releasedAt" IS NULL AND "orderId" IS NULL;
+//
+// -- pg_trgm fuzzy search on worker names (Arabic + English)
+// CREATE INDEX worker_fullnamear_trgm_idx ON "Worker" USING GIN ("fullNameAr" gin_trgm_ops);
+// CREATE INDEX worker_fullnameen_trgm_idx ON "Worker" USING GIN ("fullNameEn" gin_trgm_ops);
+//
+// -- Order status lifecycle (defense in depth — service layer is primary enforcement)
+// -- Note: hard CHECK constraints on state transitions are not practical with raw status columns;
+// -- we enforce in code and verify in OrderStatusHistory in periodic reconciliation.
+//
+// -- Customer ↔ User role consistency
+// ALTER TABLE "User" ADD CONSTRAINT user_phone_when_customer
+//   CHECK (role <> 'CUSTOMER' OR "phoneE164" IS NOT NULL);
+// ALTER TABLE "User" ADD CONSTRAINT user_email_when_staff
+//   CHECK (role = 'CUSTOMER' OR email IS NOT NULL);
+//
+// =====================================================================

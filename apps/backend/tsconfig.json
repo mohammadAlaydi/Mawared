@@ -1,0 +1,11 @@
+{
+  "extends": "@mawared/tsconfig/nest.json",
+  "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+    "types": ["node"]
+  },
+  "include": ["src/**/*", "test/**/*", "prisma/seed.ts", "scripts/**/*"]
+}

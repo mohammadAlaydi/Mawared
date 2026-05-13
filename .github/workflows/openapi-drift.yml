@@ -1,0 +1,44 @@
+name: openapi-drift
+
+on:
+  pull_request:
+    paths:
+      - 'apps/backend/**'
+
+concurrency:
+  group: openapi-drift-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  drift:
+    name: openapi.json must match the running code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile=false
+
+      - name: Generate Prisma client
+        working-directory: apps/backend
+        run: pnpm prisma generate
+
+      - name: Regenerate openapi.json
+        working-directory: apps/backend
+        run: pnpm openapi:generate
+
+      - name: Fail if openapi.json drifted
+        run: |
+          if ! git diff --quiet --exit-code apps/backend/openapi.json; then
+            echo "::error::openapi.json is out of sync with the code. Run 'pnpm --filter @mawared/backend openapi:generate' and commit."
+            git diff apps/backend/openapi.json | head -200
+            exit 1
+          fi
