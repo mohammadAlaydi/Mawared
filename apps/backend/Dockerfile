@@ -28,8 +28,9 @@ RUN corepack enable && corepack prepare pnpm@9.12.0 --activate
 RUN pnpm --filter @mawared/shared-types build
 WORKDIR /repo/apps/backend
 RUN pnpm prisma generate
-RUN npx nest build
-RUN ls -la dist/ || echo "dist/ not found — build may have failed silently"
+RUN pnpm build
+# Verify build produced output
+RUN ls dist/main.js || (echo "ERROR: dist/main.js not found" && exit 1)
 
 # ---- Stage 3: prod deps only ----
 FROM node:20-alpine AS prod-deps
@@ -44,9 +45,8 @@ RUN pnpm install --frozen-lockfile=false --filter @mawared/backend... --prod
 # ---- Stage 4: runtime ----
 FROM node:20-alpine AS runtime
 RUN apk add --no-cache tini openssl
-# Prisma CLI is needed at runtime for `prisma migrate deploy` (Railway preDeploy
-# hook). Pinned to match @prisma/client in package.json.
-RUN npm i -g prisma@^5.22.0 && npm cache clean --force
+# Prisma CLI is needed at runtime for `prisma migrate deploy` (Railway preDeploy hook).
+RUN npm i -g prisma@5.22.0 && npm cache clean --force
 WORKDIR /repo/apps/backend
 ENV NODE_ENV=production \
     PORT=3000

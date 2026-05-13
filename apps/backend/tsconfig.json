@@ -2,7 +2,8 @@
   "extends": "@mawared/tsconfig/nest.json",
   "compilerOptions": {
     "baseUrl": "./",
-    "rootDir": "./",
+    "rootDir": "./src",
+    "outDir": "./dist",
     "paths": {
       "@/*": ["src/*"]
     },
