@@ -1,16 +1,21 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { VersioningType } from '@nestjs/common';
 import helmet from 'helmet';
 import { Logger as PinoLogger } from 'nestjs-pino';
 import { ConfigService } from '@nestjs/config';
 import * as Sentry from '@sentry/node';
+import express, { type Request } from 'express';
 import { AppModule } from './app.module';
 import type { Env } from './shared/config/env.schema';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bufferLogs: true,
+    rawBody: true,
+  });
   app.useLogger(app.get(PinoLogger));
 
   const config = app.get(ConfigService<Env, true>);
@@ -27,6 +32,25 @@ async function bootstrap(): Promise<void> {
     });
   }
 
+  // Stripe webhook needs the raw body to verify signatures. Carve it out
+  // before Nest's JSON body parser fires.
+  const stripeRawBody = express.raw({ type: 'application/json' });
+  app.use('/v1/payments/webhooks/stripe', (req: Request, res, next) => {
+    stripeRawBody(req, res, (err) => {
+      if (err) return next(err);
+      // Preserve the raw bytes for the controller and a parsed copy for logs.
+      (req as Request & { rawBody?: Buffer }).rawBody = req.body as Buffer;
+      try {
+        if (Buffer.isBuffer(req.body)) {
+          req.body = JSON.parse(req.body.toString('utf8'));
+        }
+      } catch {
+        // leave req.body as the raw buffer; controller will fail validation
+      }
+      next();
+    });
+  });
+
   app.use(helmet());
   app.enableCors({
     origin: corsOrigins,
@@ -35,10 +59,8 @@ async function bootstrap(): Promise<void> {
   });
   app.enableShutdownHooks();
 
-  // URI versioning: /v1/...
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
 
-  // OpenAPI / Swagger
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Mawared International API')
     .setDescription('Backend API for the Mawared mobile app, admin dashboard, and website.')

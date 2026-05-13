@@ -13,6 +13,9 @@ import { WorkersModule } from './modules/workers/workers.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { BranchesModule } from './modules/branches/branches.module';
 import { OffersModule } from './modules/offers/offers.module';
+import { OrdersModule } from './modules/orders/orders.module';
+import { PaymentsModule } from './modules/payments/payments.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { RequestContextInterceptor } from './common/interceptors/request-context.interceptor';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
@@ -36,12 +39,14 @@ import { RolesGuard } from './common/guards/roles.guard';
     CatalogModule,
     BranchesModule,
     OffersModule,
+    OrdersModule,
+    PaymentsModule,
+    NotificationsModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
     { provide: APP_INTERCEPTOR, useClass: RequestContextInterceptor },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
-    // JwtAuthGuard runs after ThrottlerGuard. Anonymous endpoints opt out via @Public().
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
   ],
