@@ -66,4 +66,4 @@ RUN addgroup -S app && adduser -S app -G app && chown -R app:app /repo
 USER app
 EXPOSE 3000
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["node", "dist/main.js"]
+CMD ["sh", "-c", "prisma migrate deploy --schema=prisma/schema.prisma && node dist/main.js"]

@@ -21,4 +21,5 @@ restartPolicyMaxRetries = 5
 # Uses the globally-installed `prisma` CLI baked into the runtime stage of
 # apps/backend/Dockerfile (pnpm is not present at runtime). WORKDIR is
 # /repo/apps/backend, so the relative schema path resolves correctly.
-preDeployCommand = "prisma migrate deploy --schema=prisma/schema.prisma"
+# Migrations run in the startCommand (CMD) below, not via preDeploy,
+# because the preDeploy container doesn't have access to service env vars.
