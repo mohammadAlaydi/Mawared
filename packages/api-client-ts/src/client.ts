@@ -1,15 +1,30 @@
 import { ApiError, NetworkError } from './errors';
 import type {
   Address,
+  AdminActiveWorkersResponse,
+  AdminCustomer,
+  AdminOrdersByStatusReport,
+  AdminRefundsReport,
+  AdminRevenueReport,
+  AdminCustomerDetail,
+  AdminOverviewResponse,
+  AdminPaymentIntent,
+  AdminRefund,
+  AdminStaff,
+  CustomerContract,
+  FileSignedUrl,
   AuthResponse,
   Branch,
   CreateOrderInput,
+  FeatureFlag,
+  Nationality,
   Notification,
   Offer,
   Order,
   Paged,
   PaymentIntentResponse,
   PromoValidation,
+  PublicStats,
   SearchWorkersQuery,
   ServiceCategory,
   ServicePackage,
@@ -27,6 +42,8 @@ export interface MawaredClientOptions {
   /** UUID v4 stable per device install. */
   deviceId?: string;
   fetchImpl?: typeof fetch;
+  /** Override the idempotency-key generator (defaults to crypto.randomUUID). */
+  idempotencyKeyFactory?: () => string;
 }
 
 /**
@@ -82,6 +99,14 @@ export class MawaredClient {
         deviceId,
         totp,
       }),
+    totp: {
+      enroll: () =>
+        this.req<{ secret: string; otpauthUri: string }>('POST', '/v1/admin/auth/totp/enroll'),
+      verify: (code: string) =>
+        this.req<void>('POST', '/v1/admin/auth/totp/verify', { code }),
+      disable: (code: string) =>
+        this.req<void>('POST', '/v1/admin/auth/totp/disable', { code }),
+    },
   };
 
   // ===== Profile =====
@@ -104,6 +129,13 @@ export class MawaredClient {
       add: (workerId: string) => this.req<void>('POST', `/v1/me/favorites/${workerId}`),
       remove: (workerId: string) => this.req<void>('DELETE', `/v1/me/favorites/${workerId}`),
     },
+    verification: {
+      get: () => this.req<{ status: string; expiresAt: string | null }>('GET', '/v1/me/verification'),
+      start: () => this.req<{ redirectUrl: string; sessionId: string }>('POST', '/v1/me/verification/start'),
+    },
+    contracts: {
+      list: () => this.req<{ items: CustomerContract[] }>('GET', '/v1/me/contracts'),
+    },
   };
 
   // ===== Workers / catalog =====
@@ -125,6 +157,10 @@ export class MawaredClient {
     findById: (id: string) => this.req<Branch>('GET', `/v1/branches/${id}`),
   };
 
+  nationalities = {
+    list: () => this.req<{ items: Nationality[] }>('GET', '/v1/nationalities'),
+  };
+
   offers = {
     list: () => this.req<{ items: Offer[] }>('GET', '/v1/offers'),
     validate: (body: { code: string; subtotalMinor: string; currency: string }) =>
@@ -134,8 +170,10 @@ export class MawaredClient {
   // ===== Orders / payments =====
 
   orders = {
-    create: (body: CreateOrderInput, idempotencyKey: string) =>
-      this.req<Order>('POST', '/v1/orders', body, { 'Idempotency-Key': idempotencyKey }),
+    create: (body: CreateOrderInput, idempotencyKey?: string) =>
+      this.req<Order>('POST', '/v1/orders', body, {
+        'Idempotency-Key': idempotencyKey ?? this.newIdempotencyKey(),
+      }),
     list: () => this.req<{ items: Order[] }>('GET', '/v1/orders'),
     findById: (id: string) => this.req<Order>('GET', `/v1/orders/${id}`),
     cancel: (id: string, reason?: 'CUSTOMER_REQUEST' | 'STAFF_DECISION', note?: string) =>
@@ -150,8 +188,13 @@ export class MawaredClient {
   };
 
   payments = {
-    createIntent: (orderId: string) =>
-      this.req<PaymentIntentResponse>('POST', '/v1/payments/intents', { orderId }),
+    createIntent: (orderId: string, idempotencyKey?: string) =>
+      this.req<PaymentIntentResponse>(
+        'POST',
+        '/v1/payments/intents',
+        { orderId },
+        { 'Idempotency-Key': idempotencyKey ?? this.newIdempotencyKey() },
+      ),
   };
 
   // ===== Notifications =====
@@ -171,42 +214,157 @@ export class MawaredClient {
       list: (q: Record<string, string | number | undefined> = {}) =>
         this.req<Paged<Order>>('GET', this.qs('/v1/admin/orders', q)),
       findById: (id: string) => this.req<Order>('GET', `/v1/admin/orders/${id}`),
-      transition: (id: string, body: { event: string; note?: string }) =>
-        this.req<{ from: string; to: string }>('POST', `/v1/admin/orders/${id}/transition`, body),
-      refund: (id: string, body: { amountMinor?: string; reason?: string }) =>
-        this.req<{ refundId: string; status: string }>('POST', `/v1/admin/orders/${id}/refund`, body),
+      transition: (id: string, body: { event: string; note?: string }, idempotencyKey?: string) =>
+        this.req<{ from: string; to: string }>(
+          'POST',
+          `/v1/admin/orders/${id}/transition`,
+          body,
+          { 'Idempotency-Key': idempotencyKey ?? this.newIdempotencyKey() },
+        ),
+      refund: (id: string, body: { amountMinor?: string; reason?: string }, idempotencyKey?: string) =>
+        this.req<{ refundId: string; status: string }>(
+          'POST',
+          `/v1/admin/orders/${id}/refund`,
+          body,
+          { 'Idempotency-Key': idempotencyKey ?? this.newIdempotencyKey() },
+        ),
     },
     workers: {
-      list: () => this.req<{ items: Worker[] }>('GET', '/v1/admin/workers'),
+      list: (q: Record<string, string | number | undefined> = {}) =>
+        this.req<Paged<Worker>>('GET', this.qs('/v1/admin/workers', q)),
       findById: (id: string) => this.req<Worker>('GET', `/v1/admin/workers/${id}`),
-      create: (body: Partial<Worker>) => this.req<Worker>('POST', '/v1/admin/workers', body),
-      update: (id: string, body: Partial<Worker>) =>
-        this.req<Worker>('PATCH', `/v1/admin/workers/${id}`, body),
+      create: (body: Partial<Worker>, idempotencyKey?: string) =>
+        this.req<Worker>('POST', '/v1/admin/workers', body, {
+          'Idempotency-Key': idempotencyKey ?? this.newIdempotencyKey(),
+        }),
+      update: (id: string, body: Partial<Worker>, idempotencyKey?: string) =>
+        this.req<Worker>('PATCH', `/v1/admin/workers/${id}`, body, {
+          'Idempotency-Key': idempotencyKey ?? this.newIdempotencyKey(),
+        }),
       delete: (id: string) => this.req<void>('DELETE', `/v1/admin/workers/${id}`),
       bindPhoto: (id: string, fileId: string) =>
         this.req<unknown>('POST', `/v1/admin/workers/${id}/photo`, { fileId }),
+      addDocument: (id: string, body: { fileId: string; kind: string; expiresAt?: string }) =>
+        this.req<unknown>('POST', `/v1/admin/workers/${id}/documents`, body),
     },
     customers: {
-      list: (q?: string) => this.req<{ items: unknown[] }>('GET', this.qs('/v1/admin/customers', { q })),
-      findById: (id: string) => this.req<unknown>('GET', `/v1/admin/customers/${id}`),
+      list: (q: { q?: string; cursor?: string; limit?: number } = {}) =>
+        this.req<Paged<AdminCustomer>>('GET', this.qs('/v1/admin/customers', q)),
+      findById: (id: string) =>
+        this.req<AdminCustomerDetail>('GET', `/v1/admin/customers/${id}`),
       suspend: (id: string) => this.req<void>('POST', `/v1/admin/customers/${id}/suspend`),
       reactivate: (id: string) => this.req<void>('POST', `/v1/admin/customers/${id}/reactivate`),
+      verification: {
+        get: (customerId: string) =>
+          this.req<{ status: string; history: unknown[] }>(
+            'GET',
+            `/v1/admin/customers/${customerId}/verification`,
+          ),
+        override: (
+          customerId: string,
+          body: { status: 'VERIFIED' | 'FAILED' | 'NOT_VERIFIED'; reason?: string },
+          idempotencyKey?: string,
+        ) =>
+          this.req<void>(
+            'POST',
+            `/v1/admin/customers/${customerId}/verification/override`,
+            body,
+            { 'Idempotency-Key': idempotencyKey ?? this.newIdempotencyKey() },
+          ),
+      },
+    },
+    catalog: {
+      services: {
+        list: () => this.req<{ items: ServiceCategory[] }>('GET', '/v1/admin/services'),
+        findById: (id: string) => this.req<ServiceCategory>('GET', `/v1/admin/services/${id}`),
+        create: (body: Partial<ServiceCategory>, idempotencyKey?: string) =>
+          this.req<ServiceCategory>('POST', '/v1/admin/services', body, {
+            'Idempotency-Key': idempotencyKey ?? this.newIdempotencyKey(),
+          }),
+        update: (id: string, body: Partial<ServiceCategory>, idempotencyKey?: string) =>
+          this.req<ServiceCategory>('PATCH', `/v1/admin/services/${id}`, body, {
+            'Idempotency-Key': idempotencyKey ?? this.newIdempotencyKey(),
+          }),
+        deactivate: (id: string) =>
+          this.req<void>('POST', `/v1/admin/services/${id}/deactivate`),
+      },
+      packages: {
+        list: (q: { serviceId?: string } = {}) =>
+          this.req<{ items: ServicePackage[] }>('GET', this.qs('/v1/admin/packages', q)),
+        findById: (id: string) => this.req<ServicePackage>('GET', `/v1/admin/packages/${id}`),
+        create: (body: Partial<ServicePackage>, idempotencyKey?: string) =>
+          this.req<ServicePackage>('POST', '/v1/admin/packages', body, {
+            'Idempotency-Key': idempotencyKey ?? this.newIdempotencyKey(),
+          }),
+        update: (id: string, body: Partial<ServicePackage>, idempotencyKey?: string) =>
+          this.req<ServicePackage>('PATCH', `/v1/admin/packages/${id}`, body, {
+            'Idempotency-Key': idempotencyKey ?? this.newIdempotencyKey(),
+          }),
+        deactivate: (id: string) =>
+          this.req<void>('POST', `/v1/admin/packages/${id}/deactivate`),
+      },
+    },
+    payments: {
+      list: (q: { cursor?: string; limit?: number; status?: string; orderId?: string; from?: string; to?: string } = {}) =>
+        this.req<Paged<AdminPaymentIntent>>('GET', this.qs('/v1/admin/payments', q)),
+      findById: (id: string) =>
+        this.req<AdminPaymentIntent>('GET', `/v1/admin/payments/${id}`),
+      refunds: (q: { cursor?: string; limit?: number; status?: string; from?: string; to?: string } = {}) =>
+        this.req<Paged<AdminRefund>>('GET', this.qs('/v1/admin/payments/refunds', q)),
     },
     promos: {
       list: () => this.req<{ items: Offer[] }>('GET', '/v1/admin/promos'),
-      create: (body: Partial<Offer> & { code: string }) =>
-        this.req<Offer>('POST', '/v1/admin/promos', body),
-      update: (id: string, body: Partial<Offer>) =>
-        this.req<Offer>('PATCH', `/v1/admin/promos/${id}`, body),
+      findById: (id: string) => this.req<Offer>('GET', `/v1/admin/promos/${id}`),
+      create: (body: Partial<Offer> & { code: string }, idempotencyKey?: string) =>
+        this.req<Offer>('POST', '/v1/admin/promos', body, {
+          'Idempotency-Key': idempotencyKey ?? this.newIdempotencyKey(),
+        }),
+      update: (id: string, body: Partial<Offer>, idempotencyKey?: string) =>
+        this.req<Offer>('PATCH', `/v1/admin/promos/${id}`, body, {
+          'Idempotency-Key': idempotencyKey ?? this.newIdempotencyKey(),
+        }),
       deactivate: (id: string) => this.req<void>('POST', `/v1/admin/promos/${id}/deactivate`),
+    },
+    staff: {
+      list: () => this.req<{ items: AdminStaff[] }>('GET', '/v1/admin/staff'),
+      findById: (id: string) => this.req<AdminStaff>('GET', `/v1/admin/staff/${id}`),
+      create: (
+        body: { email: string; password: string; fullName: string; role: AdminStaff['role']; branchId?: string },
+        idempotencyKey?: string,
+      ) =>
+        this.req<AdminStaff>('POST', '/v1/admin/staff', body, {
+          'Idempotency-Key': idempotencyKey ?? this.newIdempotencyKey(),
+        }),
+      update: (id: string, body: Partial<AdminStaff>, idempotencyKey?: string) =>
+        this.req<AdminStaff>('PATCH', `/v1/admin/staff/${id}`, body, {
+          'Idempotency-Key': idempotencyKey ?? this.newIdempotencyKey(),
+        }),
+      deactivate: (id: string) =>
+        this.req<void>('POST', `/v1/admin/staff/${id}/deactivate`),
     },
     reports: {
       revenue: (from: string, to: string, branchId?: string) =>
-        this.req<unknown>('GET', this.qs('/v1/admin/reports/revenue', { from, to, branchId })),
+        this.req<AdminRevenueReport>(
+          'GET',
+          this.qs('/v1/admin/reports/revenue', { from, to, branchId }),
+        ),
       ordersByStatus: (from: string, to: string, branchId?: string) =>
-        this.req<unknown>('GET', this.qs('/v1/admin/reports/orders', { from, to, branchId })),
+        this.req<AdminOrdersByStatusReport>(
+          'GET',
+          this.qs('/v1/admin/reports/orders', { from, to, branchId }),
+        ),
       refunds: (from: string, to: string, branchId?: string) =>
-        this.req<unknown>('GET', this.qs('/v1/admin/reports/refunds', { from, to, branchId })),
+        this.req<AdminRefundsReport>(
+          'GET',
+          this.qs('/v1/admin/reports/refunds', { from, to, branchId }),
+        ),
+      overview: (branchId?: string) =>
+        this.req<AdminOverviewResponse>('GET', this.qs('/v1/admin/reports/overview', { branchId })),
+      activeWorkers: (branchId?: string) =>
+        this.req<AdminActiveWorkersResponse>(
+          'GET',
+          this.qs('/v1/admin/reports/active-workers', { branchId }),
+        ),
     },
     files: {
       uploadUrl: (body: { scope: string; mimeType: string; sizeBytes: number }) =>
@@ -216,21 +374,38 @@ export class MawaredClient {
           body,
         ),
       finalize: (fileId: string) => this.req<unknown>('POST', '/v1/files/finalize', { fileId }),
+      signedUrl: (fileId: string) =>
+        this.req<FileSignedUrl>('GET', `/v1/files/${fileId}/signed-url`),
     },
     audit: (q: Record<string, string | number | undefined> = {}) =>
       this.req<{ items: unknown[] }>('GET', this.qs('/v1/admin/audit', q)),
     flags: {
-      list: () => this.req<{ items: unknown[] }>('GET', '/v1/admin/flags'),
+      list: () => this.req<{ items: FeatureFlag[] }>('GET', '/v1/admin/flags'),
       set: (body: { key: string; enabled: boolean; rules?: unknown }) =>
-        this.req<unknown>('POST', '/v1/admin/flags', body),
+        this.req<FeatureFlag>('POST', '/v1/admin/flags', body),
     },
   };
 
   // ===== Public website =====
 
   leads = {
-    create: (body: { fullName: string; phone: string; email?: string; message: string; source?: string }) =>
-      this.req<{ id: string; createdAt: string }>('POST', '/v1/leads', body),
+    create: (
+      body: {
+        fullName: string;
+        phone: string;
+        email?: string;
+        message: string;
+        source?: string;
+      },
+      idempotencyKey?: string,
+    ) =>
+      this.req<{ id: string; createdAt: string }>('POST', '/v1/leads', body, {
+        'Idempotency-Key': idempotencyKey ?? this.newIdempotencyKey(),
+      }),
+  };
+
+  publicStats = {
+    get: () => this.req<PublicStats>('GET', '/v1/public/stats'),
   };
 
   // ===== internals =====
@@ -316,5 +491,17 @@ export class MawaredClient {
     }
     const s = params.toString();
     return s ? `${path}?${s}` : path;
+  }
+
+  private newIdempotencyKey(): string {
+    if (this.opts.idempotencyKeyFactory) return this.opts.idempotencyKeyFactory();
+    if (typeof globalThis.crypto?.randomUUID === 'function') {
+      return globalThis.crypto.randomUUID();
+    }
+    // Best-effort fallback for very old environments. Not RFC 4122-compliant but
+    // distinguishable enough for backend idempotency caching.
+    const t = Date.now().toString(16);
+    const r = Math.random().toString(16).slice(2, 10);
+    return `${t}-${r}-${r}`;
   }
 }

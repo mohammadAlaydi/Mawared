@@ -1,30 +1,53 @@
 'use client';
-import { useState } from 'react';
+
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { ApiError } from '@mawared/api-client';
 import { useAuth } from '@/lib/auth';
 import { Eye, EyeOff, Shield, Clock, Users } from 'lucide-react';
 
 export default function LoginPage() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [shake, setShake] = useState(false);
-  const { login } = useAuth();
   const router = useRouter();
+  const {
+    ready,
+    isAuthenticated,
+    login,
+    loginError,
+    loginPending,
+  } = useAuth();
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [totp, setTotp] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [requiresTotp, setRequiresTotp] = useState(false);
+  const [shake, setShake] = useState(false);
+
+  // If we land here already authenticated (e.g. browser back), bounce to dashboard.
+  useEffect(() => {
+    if (ready && isAuthenticated) {
+      router.replace('/dashboard');
+    }
+  }, [ready, isAuthenticated, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
-    await new Promise(r => setTimeout(r, 1000));
-    const success = login(username, password);
-    if (success) {
-      router.push('/dashboard');
-    } else {
-      setLoading(false);
-      setError('بيانات الدخول غير صحيحة');
+    if (loginPending) return;
+
+    try {
+      await login({
+        email,
+        password,
+        totp: requiresTotp ? totp : undefined,
+      });
+      router.replace('/dashboard');
+    } catch (err) {
+      // If the backend says TOTP is required, expose the TOTP input
+      // and don't shake — the credentials were fine, just need MFA.
+      if (err instanceof ApiError && err.code === 'AUTH_2FA_REQUIRED') {
+        setRequiresTotp(true);
+        return;
+      }
       setShake(true);
       setTimeout(() => setShake(false), 500);
     }
@@ -63,34 +86,112 @@ export default function LoginPage() {
           <h2 className="text-2xl font-black text-gray-900 mb-1">مرحباً بعودتك</h2>
           <p className="text-gray-500 mb-8">لوحة تحكم موارد الدولية</p>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">اسم المستخدم</label>
-              <input type="text" value={username} onChange={e => setUsername(e.target.value)} placeholder="admin" className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#0B5E50]/30 focus:border-[#0B5E50] transition-all" required />
+              <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
+                البريد الإلكتروني
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="username email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@mawared.sa"
+                dir="ltr"
+                disabled={loginPending}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#0B5E50]/30 focus:border-[#0B5E50] transition-all text-left disabled:opacity-60"
+                required
+              />
             </div>
+
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">كلمة المرور</label>
+              <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
+                كلمة المرور
+              </label>
               <div className="relative">
-                <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="••••" className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#0B5E50]/30 focus:border-[#0B5E50] transition-all pl-12" required />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  disabled={loginPending}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#0B5E50]/30 focus:border-[#0B5E50] transition-all pl-12 disabled:opacity-60"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  aria-label={showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'}
+                  tabIndex={-1}
+                >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
 
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-[#0B5E50] focus:ring-[#0B5E50]" />
-              <span className="text-sm text-gray-600">تذكرني</span>
-            </label>
+            {requiresTotp && (
+              <div>
+                <label htmlFor="totp" className="block text-sm font-semibold text-gray-700 mb-2">
+                  رمز التحقق الثنائي (TOTP)
+                </label>
+                <input
+                  id="totp"
+                  name="totp"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]{6}"
+                  maxLength={6}
+                  autoComplete="one-time-code"
+                  value={totp}
+                  onChange={(e) => setTotp(e.target.value.replace(/\D/g, ''))}
+                  placeholder="123456"
+                  dir="ltr"
+                  disabled={loginPending}
+                  autoFocus
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#0B5E50]/30 focus:border-[#0B5E50] transition-all text-left tracking-widest text-lg disabled:opacity-60"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  افتح تطبيق المصادقة وأدخل الرمز المكوّن من 6 أرقام.
+                </p>
+              </div>
+            )}
 
-            {error && <p className="text-red-600 text-sm font-medium bg-red-50 px-4 py-2 rounded-lg">{error}</p>}
+            {loginError && (
+              <p
+                role="alert"
+                className="text-red-700 text-sm font-medium bg-red-50 border border-red-100 px-4 py-2 rounded-lg"
+              >
+                {loginError}
+              </p>
+            )}
 
-            <button type="submit" disabled={loading} className="w-full py-3.5 rounded-xl bg-[#0B5E50] hover:bg-[#073D34] text-white font-bold text-base shadow-lg shadow-[#0B5E50]/25 transition-all disabled:opacity-70 flex items-center justify-center gap-2">
-              {loading ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> جاري الدخول...</> : 'دخول'}
+            <button
+              type="submit"
+              disabled={loginPending}
+              aria-busy={loginPending}
+              className="w-full py-3.5 rounded-xl bg-[#0B5E50] hover:bg-[#073D34] text-white font-bold text-base shadow-lg shadow-[#0B5E50]/25 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {loginPending ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  جاري الدخول...
+                </>
+              ) : (
+                'دخول'
+              )}
             </button>
           </form>
 
-          <p className="text-center text-xs text-gray-400 mt-8">© {new Date().getFullYear()} شركة موارد الدولية للإستقدام</p>
+          <p className="text-center text-xs text-gray-400 mt-8">
+            © {new Date().getFullYear()} شركة موارد الدولية للإستقدام
+          </p>
         </div>
       </div>
     </div>

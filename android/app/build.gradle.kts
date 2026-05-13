@@ -20,15 +20,32 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        // Default API base URL — overridden per build type below.
+        // Localhost on the Android *emulator* is 10.0.2.2 from the device's
+        // perspective. For physical devices, point this at your dev box's
+        // LAN IP or a staging URL.
+        buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:3000\"")
     }
 
     buildTypes {
+        debug {
+            isMinifyEnabled = false
+            // Debug builds default to the emulator-friendly localhost.
+            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:3000\"")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // Release: point at staging by default. CI should override via
+            // gradle property when building production:
+            //   ./gradlew :app:assembleRelease -PapiBaseUrl=https://api.mawared.sa
+            val released = (project.findProperty("apiBaseUrl") as String?)
+                ?: "https://mawared-api-staging.up.railway.app"
+            buildConfigField("String", "API_BASE_URL", "\"$released\"")
         }
     }
 
@@ -43,6 +60,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     packaging {
@@ -90,6 +108,19 @@ dependencies {
 
     // Core KTX
     implementation("androidx.core:core-ktx:1.15.0")
+
+    // ----- Networking (Mawared API client) -----
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-moshi:2.11.0")
+    implementation("com.squareup.moshi:moshi-kotlin:1.15.1")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    // ----- Encrypted token storage -----
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+
+    // ----- Coroutines (kotlinx core; android dispatcher) -----
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
     // Testing
     testImplementation("junit:junit:4.13.2")

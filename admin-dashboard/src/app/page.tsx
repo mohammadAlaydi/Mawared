@@ -1,12 +1,26 @@
 'use client';
+
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth';
 
+/**
+ * Root route. Bounces to /dashboard or /login depending on session state.
+ * The auth context is the single source of truth — we never read
+ * sessionStorage directly here.
+ */
 export default function Home() {
   const router = useRouter();
+  const { ready, isAuthenticated } = useAuth();
+
   useEffect(() => {
-    const auth = sessionStorage.getItem('mawared_auth');
-    router.replace(auth === 'true' ? '/dashboard' : '/login');
-  }, [router]);
-  return <div className="min-h-screen bg-surface flex items-center justify-center"><div className="skeleton w-12 h-12 rounded-full" /></div>;
+    if (!ready) return;
+    router.replace(isAuthenticated ? '/dashboard' : '/login');
+  }, [ready, isAuthenticated, router]);
+
+  return (
+    <div className="min-h-screen bg-surface flex items-center justify-center">
+      <div className="w-12 h-12 rounded-full border-2 border-gray-200 border-t-[#0B5E50] animate-spin" />
+    </div>
+  );
 }

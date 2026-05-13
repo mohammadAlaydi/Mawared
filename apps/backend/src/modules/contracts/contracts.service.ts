@@ -109,6 +109,81 @@ export class ContractsService {
     throw new Error('Failed to issue contract after 5 attempts');
   }
 
+  /**
+   * Lists every contract on the customer's orders, newest first.
+   * Caller is the User.id; we resolve it to the Customer record server-side
+   * (Customer.userId is the PK and matches User.id).
+   */
+  async listForCustomer(customerId: string) {
+    const contracts = await this.prisma.contract.findMany({
+      where: { order: { customerId, deletedAt: null } },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        order: {
+          select: {
+            id: true,
+            orderNumber: true,
+            status: true,
+            totalMinor: true,
+            currency: true,
+            address: { select: { city: true } },
+          },
+        },
+        worker: {
+          select: {
+            id: true,
+            fullNameAr: true,
+            fullNameEn: true,
+            profession: true,
+            photoFileId: true,
+            nationality: {
+              select: { code: true, nameAr: true, nameEn: true, flagEmoji: true },
+            },
+          },
+        },
+        pdfFile: { select: { id: true, status: true } },
+      },
+    });
+
+    return {
+      items: contracts.map((c) => ({
+        id: c.id,
+        contractNumber: c.contractNumber,
+        status: c.status,
+        startDate: c.startDate.toISOString(),
+        endDate: c.endDate.toISOString(),
+        monthlySalaryMinor: c.monthlySalaryMinor.toString(),
+        currency: c.currency,
+        voidedAt: c.voidedAt?.toISOString() ?? null,
+        order: {
+          id: c.order.id,
+          orderNumber: c.order.orderNumber,
+          status: c.order.status,
+          totalMinor: c.order.totalMinor.toString(),
+          currency: c.order.currency,
+          city: c.order.address?.city ?? null,
+        },
+        worker: {
+          id: c.worker.id,
+          fullNameAr: c.worker.fullNameAr,
+          fullNameEn: c.worker.fullNameEn,
+          profession: c.worker.profession,
+          photoFileId: c.worker.photoFileId,
+          nationality: c.worker.nationality
+            ? {
+                code: c.worker.nationality.code,
+                nameAr: c.worker.nationality.nameAr,
+                nameEn: c.worker.nationality.nameEn,
+                flagEmoji: c.worker.nationality.flagEmoji,
+              }
+            : null,
+        },
+        pdfFileId: c.pdfFile?.id ?? null,
+        pdfReady: c.pdfFile?.status === 'READY',
+      })),
+    };
+  }
+
   async findForCustomer(customerId: string, orderId: string) {
     const order = await this.prisma.order.findFirst({
       where: { id: orderId, customerId, deletedAt: null },

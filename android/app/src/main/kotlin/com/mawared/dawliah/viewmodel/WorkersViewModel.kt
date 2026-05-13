@@ -1,11 +1,13 @@
 package com.mawared.dawliah.viewmodel
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.mawared.dawliah.data.mock.MockWorkers
+import com.mawared.dawliah.data.di.appContainer
 import com.mawared.dawliah.data.model.Worker
 import com.mawared.dawliah.data.model.WorkerProfession
-import kotlinx.coroutines.delay
+import com.mawared.dawliah.data.remote.ApiErrors
+import com.mawared.dawliah.data.remote.WorkersRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,25 +32,84 @@ data class WorkersUiState(
     val error: String? = null,
 )
 
-class WorkersViewModel : ViewModel() {
+/**
+ * Workers screen — paged listing backed by `GET /v1/workers`.
+ *
+ * Pagination: collapsed to "first 50" until we wire infinite scroll.
+ * Filters are applied **client-side** on top of the loaded set; if we
+ * ever push them server-side (better for large catalogs), move `profession`
+ * + `nationalityCode` into the `repo.search()` call and re-fetch on
+ * `updateFilters`.
+ */
+class WorkersViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val container = application.appContainer()
+    private val repo = WorkersRepository(container.api)
+
     private val _uiState = MutableStateFlow(WorkersUiState())
     val uiState: StateFlow<WorkersUiState> = _uiState.asStateFlow()
 
-    init { loadWorkers() }
+    init {
+        loadWorkers()
+        loadFavorites()
+    }
 
-    private fun loadWorkers() {
+    fun loadWorkers() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            delay(1500)
-            _uiState.update { it.copy(isLoading = false, workers = MockWorkers.all, filteredWorkers = MockWorkers.all) }
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            runCatching { repo.search(limit = 50) }
+                .onSuccess { list ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            workers = list,
+                            filteredWorkers = list,
+                            error = null,
+                        )
+                    }
+                    applyFilters()
+                }
+                .onFailure { t ->
+                    _uiState.update {
+                        it.copy(isLoading = false, error = ApiErrors.toMessage(t))
+                    }
+                }
+        }
+    }
+
+    /** Best-effort: anonymous + non-logged-in users 401 on /me/favorites; that's fine. */
+    private fun loadFavorites() {
+        viewModelScope.launch {
+            runCatching { repo.listFavorites() }
+                .onSuccess { favs ->
+                    _uiState.update { it.copy(favorites = favs.map(Worker::id).toSet()) }
+                }
         }
     }
 
     fun toggleFavorite(workerId: String) {
+        val wasFavorite = _uiState.value.favorites.contains(workerId)
+        // Optimistic flip — revert on failure.
         _uiState.update { state ->
-            val newFavorites = state.favorites.toMutableSet()
-            if (newFavorites.contains(workerId)) newFavorites.remove(workerId) else newFavorites.add(workerId)
-            state.copy(favorites = newFavorites)
+            val s = state.favorites.toMutableSet()
+            if (wasFavorite) s.remove(workerId) else s.add(workerId)
+            state.copy(favorites = s)
+        }
+        viewModelScope.launch {
+            val result = runCatching {
+                if (wasFavorite) repo.removeFavorite(workerId)
+                else repo.addFavorite(workerId)
+            }
+            if (result.isFailure) {
+                _uiState.update { state ->
+                    val s = state.favorites.toMutableSet()
+                    if (wasFavorite) s.add(workerId) else s.remove(workerId)
+                    state.copy(
+                        favorites = s,
+                        error = ApiErrors.toMessage(result.exceptionOrNull()!!),
+                    )
+                }
+            }
         }
     }
 
@@ -70,9 +131,13 @@ class WorkersViewModel : ViewModel() {
     private fun applyFilters() {
         _uiState.update { state ->
             val filtered = state.workers.filter { w ->
-                val matchSearch = state.searchQuery.isEmpty() || w.nameAr.contains(state.searchQuery) || w.nationality.contains(state.searchQuery)
-                val matchNat = state.activeFilters.nationality == null || w.nationality == state.activeFilters.nationality
-                val matchProf = state.activeFilters.profession == null || w.profession == state.activeFilters.profession
+                val matchSearch = state.searchQuery.isEmpty() ||
+                    w.nameAr.contains(state.searchQuery) ||
+                    w.nationality.contains(state.searchQuery)
+                val matchNat = state.activeFilters.nationality == null ||
+                    w.nationality == state.activeFilters.nationality
+                val matchProf = state.activeFilters.profession == null ||
+                    w.profession == state.activeFilters.profession
                 val matchSalary = w.monthlySalary in state.activeFilters.salaryRange
                 val matchExp = w.experienceYears >= state.activeFilters.minExperience
                 val matchAvail = !state.activeFilters.availableOnly || w.isAvailable

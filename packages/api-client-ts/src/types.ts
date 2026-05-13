@@ -207,3 +207,226 @@ export interface Notification {
   readAt?: string | null;
   createdAt: string;
 }
+
+// ===== Files =====
+
+export interface FileSignedUrl {
+  url: string;
+  expiresAt: string;
+  mimeType: string;
+}
+
+// ===== Customer contracts =====
+
+export interface CustomerContract {
+  id: string;
+  contractNumber: string;
+  status: 'ACTIVE' | 'EXPIRED' | 'VOIDED' | 'PENDING_RENEWAL';
+  startDate: string;
+  endDate: string;
+  monthlySalaryMinor: string;
+  currency: string;
+  voidedAt: string | null;
+  order: {
+    id: string;
+    orderNumber: string;
+    status: OrderStatus;
+    totalMinor: string;
+    currency: string;
+    city: string | null;
+  };
+  worker: {
+    id: string;
+    fullNameAr: string;
+    fullNameEn: string | null;
+    profession: Worker['profession'];
+    photoFileId: string | null;
+    nationality: {
+      code: string;
+      nameAr: string;
+      nameEn: string;
+      flagEmoji: string;
+    } | null;
+  };
+  pdfFileId: string | null;
+  pdfReady: boolean;
+}
+
+// ===== Public marketing-site stats =====
+
+export interface PublicStats {
+  verifiedCustomerCount: number;
+  availableWorkerCount: number;
+  nationalityCount: number;
+  averageWorkerRating: number;
+  computedAt: string;
+}
+
+// ===== Admin reports =====
+
+export interface AdminOverviewResponse {
+  branchId: string | null;
+  revenue: {
+    yesterday: Array<{ currency: string; minor: string }>;
+    dayBefore: Array<{ currency: string; minor: string }>;
+    last30Days: Array<{ day: string; currency: string; minor: string }>;
+  };
+  ordersByStatus: Array<{ status: OrderStatus; count: number }>;
+  workersByAvailability: Array<{
+    availability: 'AVAILABLE' | 'RESERVED' | 'BOOKED' | 'ARCHIVED';
+    count: number;
+  }>;
+  newCustomers30d: number;
+  recentOrders: Array<{
+    id: string;
+    status: OrderStatus;
+    currency: string;
+    totalMinor: string;
+    createdAt: string;
+    customerName: string | null;
+    customerPhone: string | null;
+  }>;
+}
+
+export interface AdminRevenueReport {
+  from: string;
+  to: string;
+  branchId: string | null;
+  items: Array<{
+    day: string;
+    currency: string;
+    grossMinor: string;
+    netMinor: string;
+    orderCount: number;
+  }>;
+}
+
+export interface AdminOrdersByStatusReport {
+  from: string;
+  to: string;
+  branchId: string | null;
+  items: Array<{ status: OrderStatus; count: number }>;
+}
+
+export interface AdminRefundsReport {
+  from: string;
+  to: string;
+  branchId: string | null;
+  items: Array<{
+    currency: string;
+    refundCount: number;
+    refundMinor: string;
+    totalPaidOrders: number;
+    refundRate: number;
+  }>;
+}
+
+export interface AdminActiveWorkersResponse {
+  branchId: string | null;
+  total: number;
+  byAvailability: Array<{
+    availability: 'AVAILABLE' | 'RESERVED' | 'BOOKED' | 'ARCHIVED';
+    count: number;
+  }>;
+  byNationality: Array<{
+    nationalityId: string;
+    code: string;
+    nameAr: string;
+    nameEn: string;
+    flagEmoji: string;
+    count: number;
+  }>;
+}
+
+// ===== Admin payments / refunds =====
+
+export interface AdminPaymentIntent {
+  id: string;
+  orderId: string;
+  providerIntentId: string;
+  status: string;
+  amountMinor: string;
+  currency: string;
+  createdAt: string;
+  paidAt: string | null;
+}
+
+export interface AdminRefund {
+  id: string;
+  paymentIntentId: string;
+  orderId: string;
+  status: string;
+  amountMinor: string;
+  currency: string;
+  reason: string | null;
+  createdAt: string;
+}
+
+// ===== Admin customer detail =====
+
+export interface AdminCustomer {
+  userId: string;
+  firstName: string | null;
+  lastName: string | null;
+  phoneE164: string;
+  email: string | null;
+  preferredLocale: 'ar' | 'en';
+  verificationStatus: 'NOT_VERIFIED' | 'IN_PROGRESS' | 'VERIFIED' | 'FAILED';
+  isSuspended: boolean;
+  createdAt: string;
+  totalOrders?: number;
+  lifetimeValueMinor?: string;
+}
+
+/**
+ * Returned by GET /v1/admin/customers/:id. Extends the list row with
+ * address book + session count + computed lifetime value.
+ */
+export interface AdminCustomerDetail extends AdminCustomer {
+  totalOrders: number;
+  lifetimeValueMinor: string;
+  activeSessions: number;
+  addresses: Array<{
+    id: string;
+    label: string;
+    city: string;
+    district: string;
+    street: string;
+    buildingNumber: string;
+    isDefault: boolean;
+  }>;
+}
+
+// ===== Nationalities =====
+
+export interface Nationality {
+  id: string;
+  code: string;
+  nameAr: string;
+  nameEn: string;
+  flagEmoji: string;
+}
+
+// ===== Admin staff =====
+
+export interface AdminStaff {
+  id: string;
+  email: string;
+  fullName: string;
+  role: 'STAFF' | 'BRANCH_MANAGER' | 'SUPER_ADMIN';
+  branchId: string | null;
+  isActive: boolean;
+  totpEnrolled: boolean;
+  createdAt: string;
+}
+
+// ===== Feature flags =====
+
+export interface FeatureFlag {
+  key: string;
+  enabled: boolean;
+  rolloutPercent: number | null;
+  userIds: string[] | null;
+  roles: string[] | null;
+  updatedAt: string;
+}

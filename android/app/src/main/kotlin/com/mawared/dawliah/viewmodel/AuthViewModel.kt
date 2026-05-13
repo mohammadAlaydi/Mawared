@@ -1,8 +1,14 @@
 package com.mawared.dawliah.viewmodel
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import android.os.Build
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.delay
+import com.mawared.api.LogoutRequest
+import com.mawared.api.OtpRequest
+import com.mawared.api.OtpVerify
+import com.mawared.dawliah.data.di.appContainer
+import com.mawared.dawliah.data.remote.ApiErrors
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,13 +23,39 @@ data class AuthUiState(
     val isOtpSent: Boolean = false,
     val isVerifying: Boolean = false,
     val isVerified: Boolean = false,
-    val userName: String = "محمد",
-    val userCity: String = "الرياض",
+    val userName: String = "",
+    val userCity: String = "",
     val error: String? = null,
 )
 
-class AuthViewModel : ViewModel() {
-    private val _uiState = MutableStateFlow(AuthUiState())
+/**
+ * Real OTP flow via `/v1/auth/otp/request` and `/v1/auth/otp/verify`.
+ *
+ * On successful verify, tokens are persisted in the app's
+ * [com.mawared.dawliah.data.remote.AndroidTokenStorage] (encrypted shared
+ * preferences). The [com.mawared.api.AuthInterceptor] then attaches them
+ * to every subsequent request automatically.
+ *
+ * On first launch we probe storage: if a refresh token is already there,
+ * we consider the user "logged in" and skip the OTP screen.
+ */
+class AuthViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val container = application.appContainer()
+    private val api = container.api
+    private val tokenStorage = container.tokenStorage
+    private val deviceId = container.deviceId
+
+    private val _uiState = MutableStateFlow(
+        AuthUiState(
+            // If we already have a refresh token from a prior install, skip the
+            // OTP screen. (The token may have been revoked server-side — we'll
+            // find out on the first authenticated request, which will 401 and
+            // the refresh authenticator will clear storage.)
+            isLoggedIn = tokenStorage.refreshToken() != null,
+            isFirstLaunch = tokenStorage.refreshToken() == null,
+        )
+    )
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
 
     fun updatePhone(phone: String) {
@@ -31,23 +63,69 @@ class AuthViewModel : ViewModel() {
     }
 
     fun sendOtp() {
+        val phone = _uiState.value.phoneNumber.trim()
+        if (phone.isEmpty()) {
+            _uiState.update { it.copy(error = "أدخل رقم الجوال") }
+            return
+        }
         viewModelScope.launch {
-            _uiState.update { it.copy(isVerifying = true) }
-            delay(1500)
-            _uiState.update { it.copy(isVerifying = false, isOtpSent = true) }
+            _uiState.update { it.copy(isVerifying = true, error = null) }
+            runCatching {
+                api.auth.requestOtp(OtpRequest(phone = phone, locale = "ar"))
+            }.onSuccess {
+                _uiState.update {
+                    it.copy(isVerifying = false, isOtpSent = true, error = null)
+                }
+            }.onFailure { t ->
+                _uiState.update {
+                    it.copy(isVerifying = false, error = ApiErrors.toMessage(t))
+                }
+            }
         }
     }
 
     fun verifyOtp(code: String) {
+        val phone = _uiState.value.phoneNumber.trim()
+        val trimmedCode = code.trim()
+        if (trimmedCode.length < 4) {
+            _uiState.update { it.copy(error = "أدخل رمز التحقق") }
+            return
+        }
         viewModelScope.launch {
-            _uiState.update { it.copy(otpCode = code, isVerifying = true) }
-            delay(2000)
-            _uiState.update { it.copy(isVerifying = false, isVerified = true, isLoggedIn = true, isFirstLaunch = false) }
+            _uiState.update { it.copy(otpCode = trimmedCode, isVerifying = true, error = null) }
+            runCatching {
+                api.auth.verifyOtp(
+                    OtpVerify(
+                        phone = phone,
+                        code = trimmedCode,
+                        deviceId = deviceId,
+                        deviceName = "${Build.MANUFACTURER} ${Build.MODEL}",
+                    )
+                )
+            }.onSuccess { resp ->
+                tokenStorage.save(resp.accessToken, resp.refreshToken)
+                _uiState.update {
+                    it.copy(
+                        isVerifying = false,
+                        isVerified = true,
+                        isLoggedIn = true,
+                        isFirstLaunch = false,
+                        error = null,
+                    )
+                }
+            }.onFailure { t ->
+                _uiState.update {
+                    it.copy(isVerifying = false, error = ApiErrors.toMessage(t))
+                }
+            }
         }
     }
 
     fun updateProfile(name: String, city: String) {
         _uiState.update { it.copy(userName = name, userCity = city) }
+        // TODO(profile-pe-vm): wire to api.me.update once the profile screen
+        // collects the firstName/lastName/preferredLocale split. Backend
+        // endpoint: PATCH /v1/me.
     }
 
     fun setFirstLaunchDone() {
@@ -55,6 +133,16 @@ class AuthViewModel : ViewModel() {
     }
 
     fun logout() {
-        _uiState.update { AuthUiState() }
+        val refresh = tokenStorage.refreshToken()
+        viewModelScope.launch {
+            // Best-effort server-side session revoke. Local clear runs
+            // regardless — the user is logged out from this device's POV
+            // even if the request fails (offline, expired, etc.).
+            if (refresh != null) {
+                runCatching { api.auth.logout(LogoutRequest(refresh)) }
+            }
+            tokenStorage.clear()
+            _uiState.value = AuthUiState()
+        }
     }
 }

@@ -3,16 +3,194 @@
 import { motion, useInView } from "framer-motion";
 import { useRef, useState } from "react";
 
+type SubmitState =
+  | { status: "idle" }
+  | { status: "submitting" }
+  | { status: "success" }
+  | { status: "error"; message: string };
+
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") || "";
+
+const SERVICE_TYPES = [
+  "عاملة منزلية",
+  "سائق خاص",
+  "مربية أطفال",
+  "رعاية مسنين",
+  "أخرى",
+] as const;
+
+// E.164 normalizer: strip spaces/dashes/parens, ensure leading +.
+// Backend regex: /^\+[1-9][0-9]{6,14}$/
+function normalizePhoneToE164(raw: string): string {
+  const cleaned = raw.replace(/[\s\-()]/g, "");
+  if (!cleaned) return "";
+  // If user typed without +, assume Saudi local prefix.
+  if (!cleaned.startsWith("+")) {
+    // Saudi mobile starting with 0 → +966...
+    if (cleaned.startsWith("0")) return `+966${cleaned.slice(1)}`;
+    return `+${cleaned}`;
+  }
+  return cleaned;
+}
+
+function isValidE164(value: string): boolean {
+  return /^\+[1-9][0-9]{6,14}$/.test(value);
+}
+
 export default function ContactSection() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
-  const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [serviceType, setServiceType] = useState("");
+  const [message, setMessage] = useState("");
+  const [submitState, setSubmitState] = useState<SubmitState>({
+    status: "idle",
+  });
+
+  const resetForm = () => {
+    setFullName("");
+    setPhone("");
+    setEmail("");
+    setServiceType("");
+    setMessage("");
   };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (submitState.status === "submitting") return;
+
+    // ---- Client-side validation ----
+    const trimmedName = fullName.trim();
+    if (trimmedName.length < 2 || trimmedName.length > 120) {
+      setSubmitState({
+        status: "error",
+        message: "الرجاء إدخال اسم صحيح (2–120 حرفاً).",
+      });
+      return;
+    }
+
+    const phoneE164 = normalizePhoneToE164(phone);
+    if (!isValidE164(phoneE164)) {
+      setSubmitState({
+        status: "error",
+        message: "رقم الجوال غير صحيح. مثال: +966512345678",
+      });
+      return;
+    }
+
+    const trimmedEmail = email.trim();
+    if (trimmedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setSubmitState({
+        status: "error",
+        message: "البريد الإلكتروني غير صحيح.",
+      });
+      return;
+    }
+
+    const trimmedMessage = message.trim();
+    if (trimmedMessage.length < 2 || trimmedMessage.length > 2000) {
+      setSubmitState({
+        status: "error",
+        message: "الرجاء كتابة رسالة (2–2000 حرف).",
+      });
+      return;
+    }
+
+    if (!API_BASE_URL) {
+      // No backend configured — fail loudly in dev rather than silently drop the lead.
+      // eslint-disable-next-line no-console
+      console.error(
+        "[contact-form] NEXT_PUBLIC_API_BASE_URL is not set; cannot submit lead.",
+      );
+      setSubmitState({
+        status: "error",
+        message: "تعذّر إرسال الرسالة. الرجاء المحاولة لاحقاً.",
+      });
+      return;
+    }
+
+    // Service type isn't a schema field — fold it into the message so it isn't lost.
+    const finalMessage = serviceType
+      ? `نوع الخدمة: ${serviceType}\n\n${trimmedMessage}`
+      : trimmedMessage;
+
+    const payload: Record<string, string> = {
+      fullName: trimmedName,
+      phone: phoneE164,
+      message: finalMessage,
+      source: "website-contact-form",
+    };
+    if (trimmedEmail) payload.email = trimmedEmail;
+
+    setSubmitState({ status: "submitting" });
+
+    try {
+      const idempotencyKey =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+      const res = await fetch(`${API_BASE_URL}/v1/leads`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": idempotencyKey,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        setSubmitState({ status: "success" });
+        resetForm();
+        // Reset the success banner after a few seconds so the form is usable again.
+        setTimeout(() => setSubmitState({ status: "idle" }), 5000);
+        return;
+      }
+
+      // Specific handling for the throttle (5/IP/10min).
+      if (res.status === 429) {
+        setSubmitState({
+          status: "error",
+          message:
+            "لقد أرسلت طلبات كثيرة. الرجاء المحاولة بعد قليل.",
+        });
+        return;
+      }
+
+      // Try to surface the backend's RFC 7807 problem+json message.
+      let serverMessage = "";
+      try {
+        const data: unknown = await res.json();
+        if (data && typeof data === "object" && "detail" in data) {
+          const detail = (data as { detail?: unknown }).detail;
+          if (typeof detail === "string") serverMessage = detail;
+        }
+      } catch {
+        // ignore JSON parse errors
+      }
+
+      setSubmitState({
+        status: "error",
+        message:
+          serverMessage ||
+          "حدث خطأ أثناء إرسال الرسالة. الرجاء المحاولة لاحقاً.",
+      });
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("[contact-form] submit failed", err);
+      setSubmitState({
+        status: "error",
+        message: "تعذّر الاتصال بالخادم. الرجاء التحقق من اتصالك بالإنترنت.",
+      });
+    }
+  };
+
+  const isSubmitting = submitState.status === "submitting";
 
   return (
     <section id="contact-form" ref={ref} className="relative py-24 overflow-hidden">
@@ -103,76 +281,132 @@ export default function ContactSection() {
           >
             <form
               onSubmit={handleSubmit}
+              noValidate
               className="bg-surface-50 rounded-3xl p-8 border border-gray-100 shadow-sm space-y-5"
             >
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="contact-name" className="block text-sm font-medium text-gray-700 mb-2">
                     الاسم الكامل
                   </label>
                   <input
+                    id="contact-name"
+                    name="fullName"
                     type="text"
+                    autoComplete="name"
                     placeholder="أدخل اسمك"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    disabled={isSubmitting}
+                    minLength={2}
+                    maxLength={120}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all disabled:opacity-60"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="contact-phone" className="block text-sm font-medium text-gray-700 mb-2">
                     رقم الجوال
                   </label>
                   <input
+                    id="contact-phone"
+                    name="phone"
                     type="tel"
-                    placeholder="+966"
+                    autoComplete="tel"
+                    placeholder="+966512345678"
                     dir="ltr"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all text-left"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    disabled={isSubmitting}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all text-left disabled:opacity-60"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="contact-email" className="block text-sm font-medium text-gray-700 mb-2">
                   البريد الإلكتروني
                 </label>
                 <input
+                  id="contact-email"
+                  name="email"
                   type="email"
+                  autoComplete="email"
                   placeholder="example@email.com"
                   dir="ltr"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all text-left"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isSubmitting}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all text-left disabled:opacity-60"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="contact-service" className="block text-sm font-medium text-gray-700 mb-2">
                   نوع الخدمة
                 </label>
-                <select className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all">
+                <select
+                  id="contact-service"
+                  name="serviceType"
+                  value={serviceType}
+                  onChange={(e) => setServiceType(e.target.value)}
+                  disabled={isSubmitting}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all disabled:opacity-60"
+                >
                   <option value="">اختر الخدمة</option>
-                  <option>عاملة منزلية</option>
-                  <option>سائق خاص</option>
-                  <option>مربية أطفال</option>
-                  <option>رعاية مسنين</option>
-                  <option>أخرى</option>
+                  {SERVICE_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="contact-message" className="block text-sm font-medium text-gray-700 mb-2">
                   رسالتك
                 </label>
                 <textarea
+                  id="contact-message"
+                  name="message"
                   rows={4}
                   placeholder="اكتب استفسارك هنا..."
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all resize-none"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  disabled={isSubmitting}
+                  minLength={2}
+                  maxLength={2000}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all resize-none disabled:opacity-60"
+                  required
                 />
               </div>
 
+              {submitState.status === "error" && (
+                <div
+                  role="alert"
+                  className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                >
+                  {submitState.message}
+                </div>
+              )}
+
+              {submitState.status === "success" && (
+                <div
+                  role="status"
+                  className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700"
+                >
+                  ✓ تم استلام رسالتك بنجاح. سنتواصل معك قريباً.
+                </div>
+              )}
+
               <button
                 type="submit"
-                className="w-full py-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-base shadow-lg shadow-brand-600/25 hover:shadow-brand-700/30 transition-all duration-300 hover:-translate-y-0.5"
+                disabled={isSubmitting}
+                aria-busy={isSubmitting}
+                className="w-full py-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-base shadow-lg shadow-brand-600/25 hover:shadow-brand-700/30 transition-all duration-300 hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0"
               >
-                {submitted ? "✓ تم الإرسال بنجاح!" : "أرسل الرسالة"}
+                {isSubmitting ? "جارٍ الإرسال..." : "أرسل الرسالة"}
               </button>
             </form>
           </motion.div>

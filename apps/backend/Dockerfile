@@ -66,4 +66,4 @@ RUN addgroup -S app && adduser -S app -G app && chown -R app:app /repo
 USER app
 EXPOSE 3000
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["sh", "-c", "prisma migrate deploy --schema=prisma/schema.prisma && node dist/main.js"]
+CMD ["sh", "-c", "echo '--- ENV DEBUG ---' && echo \"DATABASE_URL: ${DATABASE_URL:+PRESENT}\" && echo \"DIRECT_DATABASE_URL: ${DIRECT_DATABASE_URL:+PRESENT}\" && echo \"SHADOW_DATABASE_URL: ${SHADOW_DATABASE_URL:+PRESENT}\" && echo '--- END DEBUG ---' && prisma migrate deploy --schema=prisma/schema.prisma && node dist/main.js"]

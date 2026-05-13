@@ -5,15 +5,24 @@ import { ContractsService } from './contracts.service';
 
 @ApiTags('contracts')
 @ApiBearerAuth()
-@Controller({ path: 'orders', version: '1' })
+@Controller({ version: '1' })
 export class ContractsController {
   constructor(private readonly contracts: ContractsService) {}
 
   /**
-   * Returns the contract metadata for the customer's order. PDF download
-   * via presigned R2 URL lands when the files module is wired (M3+).
+   * Lists every contract attached to the customer's orders, newest first.
+   * Powers the Android "My Contracts" screen.
    */
-  @Get(':id/contract')
+  @Get('me/contracts')
+  listMyContracts(@CurrentUser() user: AuthUser) {
+    return this.contracts.listForCustomer(user.id);
+  }
+
+  /**
+   * Returns the contract metadata for a single order. PDF download is via
+   * `/v1/files/:fileId/signed-url` using the `pdfFileId` from this response.
+   */
+  @Get('orders/:id/contract')
   findForOrder(
     @CurrentUser() user: AuthUser,
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,

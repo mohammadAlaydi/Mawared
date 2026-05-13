@@ -2,7 +2,13 @@
   "permissions": {
     "allow": [
       "PowerShell(Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force)",
-      "PowerShell(& \"C:\\\\laragon\\\\bin\\\\postgresql\\\\pgsql\\\\bin\\\\psql.exe\" -U postgres -c $sql 2>&1)"
+      "PowerShell(& \"C:\\\\laragon\\\\bin\\\\postgresql\\\\pgsql\\\\bin\\\\psql.exe\" -U postgres -c $sql 2>&1)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(prisma generate *)",
+      "Bash(npx prisma *)",
+      "Bash(npm list *)"
     ]
   }
 }

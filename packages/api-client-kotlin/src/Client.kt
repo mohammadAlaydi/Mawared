@@ -43,6 +43,8 @@ class MawaredApi(
     val orders: OrdersApi,
     val payments: PaymentsApi,
     val notifications: NotificationsApi,
+    val marketing: PublicApi,
+    val adminReports: AdminReportsApi,
     val tokenStorage: TokenStorage,
 )
 
@@ -82,6 +84,8 @@ object MawaredApiClientFactory {
             orders = retrofit.create(OrdersApi::class.java),
             payments = retrofit.create(PaymentsApi::class.java),
             notifications = retrofit.create(NotificationsApi::class.java),
+            marketing = retrofit.create(PublicApi::class.java),
+            adminReports = retrofit.create(AdminReportsApi::class.java),
             tokenStorage = tokenStorage,
         )
     }
