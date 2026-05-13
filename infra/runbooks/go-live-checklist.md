@@ -57,6 +57,29 @@ through when done. Track in a GitHub Issues milestone called `Go-live`.
 - [ ] Watch the `StripeEvent` table for processed/unprocessed events.
 - [ ] Daily reconciliation cron: `SUM(Order.totalMinor WHERE status='PAID')` vs Stripe charges. Drift alert.
 
+## 5.5. Signit.sa (identity verification)
+
+Mandatory per spec §3 — customers cannot place an order without VERIFIED status.
+
+- [ ] Sandbox merchant account on Signit.sa. Capture the sandbox API key + webhook signing secret.
+- [ ] Whitelist webhook URLs in Signit's dashboard:
+  - Staging: `https://staging.api.mawared.example/v1/verifications/webhooks/signit`
+  - Production: `https://api.mawared.example/v1/verifications/webhooks/signit`
+- [ ] Set in Railway **staging**:
+  - `SIGNIT_BASE_URL=https://sandbox.signit.sa`
+  - `SIGNIT_API_KEY=<sandbox key>`
+  - `SIGNIT_WEBHOOK_SECRET=<sandbox webhook secret>`
+  - `SIGNIT_CALLBACK_URL=https://staging.api.mawared.example/v1/verifications/webhooks/signit`
+  - `VERIFICATION_TTL_DAYS=365`
+- [ ] Boot log should read `Verification provider: Signit.sa` (not "stub").
+- [ ] Smoke test: `tsx infra/scripts/signit-smoke.ts` — confirm:
+  - `GET /v1/me/verification` flips from `NOT_VERIFIED` → `PENDING` → `VERIFIED`
+  - `POST /v1/orders` returns 403 `VERIFICATION_REQUIRED` while PENDING
+  - `POST /v1/orders` succeeds once VERIFIED
+- [ ] If the sandbox returns 400/401 errors on the first call, reconcile field names — see `infra/runbooks/signit-provisioning.md` table at the bottom for the common adjustments (≤5 min fix in `signit-verification.provider.ts`).
+- [ ] Repeat for production with production keys + URLs.
+- [ ] Truncate `IdentityVerification` and reset `Customer.verificationStatus` on the prod DB before go-live (so no stub data lingers).
+
 ## 6. FCM (push)
 
 - [ ] Firebase project + Cloud Messaging API enabled.
