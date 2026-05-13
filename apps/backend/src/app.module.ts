@@ -19,6 +19,8 @@ import { OrdersModule } from './modules/orders/orders.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ContractsModule } from './modules/contracts/contracts.module';
+import { FilesModule } from './modules/files/files.module';
+import { LeadsModule } from './modules/leads/leads.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { RequestContextInterceptor } from './common/interceptors/request-context.interceptor';
@@ -49,6 +51,8 @@ import { RolesGuard } from './common/guards/roles.guard';
     PaymentsModule,
     NotificationsModule,
     ContractsModule,
+    FilesModule,
+    LeadsModule,
     AdminModule,
   ],
   providers: [

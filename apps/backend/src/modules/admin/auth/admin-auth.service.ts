@@ -6,6 +6,7 @@ import { PrismaService } from '@/shared/prisma/prisma.service';
 import { REDIS_CLIENT } from '@/shared/redis/redis.module';
 import { SessionService } from '@/modules/auth/session.service';
 import { TokenService } from '@/modules/auth/token.service';
+import { verifyTotp } from './totp';
 
 /**
  * Email + password login for staff. Argon2id verification, brute-force
@@ -47,6 +48,7 @@ export class AdminAuthService {
         branchId: true,
         passwordHash: true,
         totpEnabled: true,
+        totpSecret: true,
       },
     });
 
@@ -61,10 +63,9 @@ export class AdminAuthService {
       throw this.unauthorized();
     }
 
-    // TOTP required for elevated roles. STAFF can sign in with password only.
-    const requiresTotp =
-      user.role === 'BRANCH_MANAGER' || user.role === 'SUPER_ADMIN';
-    if (requiresTotp && user.totpEnabled) {
+    // TOTP enforced whenever the user has enrolled. The seed super-admin
+    // can sign in without it once, then enrol via /v1/admin/auth/totp/enroll.
+    if (user.totpEnabled) {
       if (!totp) {
         throw new HttpException(
           {
@@ -74,8 +75,16 @@ export class AdminAuthService {
           HttpStatus.UNAUTHORIZED,
         );
       }
-      // TODO(M3 follow-up): verify TOTP against user.totpSecret.
-      // For M3 boot, accept any 6-digit code if totpEnabled is false.
+      if (!user.totpSecret || !verifyTotp(user.totpSecret, totp)) {
+        await this.bumpFailure(email, meta.ip);
+        throw new HttpException(
+          {
+            code: ERROR_CODES.AUTH_INVALID_OTP,
+            message: 'Invalid TOTP code.',
+          },
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
     }
 
     await this.clearFailures(email, meta.ip);

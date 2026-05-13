@@ -5,6 +5,7 @@ import { PassportModule } from '@nestjs/passport';
 import { RedisModule } from '@/shared/redis/redis.module';
 import { SmsModule } from '@/shared/sms/sms.module';
 import { AuthController } from './auth.controller';
+import { JwksController } from './jwks.controller';
 import { OtpService } from './otp.service';
 import { TokenService } from './token.service';
 import { SessionService } from './session.service';
@@ -28,7 +29,7 @@ import type { Env } from '@/shared/config/env.schema';
       },
     }),
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, JwksController],
   providers: [OtpService, TokenService, SessionService, JwtStrategy],
   exports: [TokenService, SessionService],
 })
