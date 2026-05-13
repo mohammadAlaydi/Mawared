@@ -1,9 +1,14 @@
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { ERROR_CODES, type OrderStatus } from '@mawared/shared-types';
 import { Prisma, type AuditActorType } from '@prisma/client';
 import { createHash } from 'node:crypto';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import { OffersService } from '@/modules/offers/offers.service';
+import { NotificationsService } from '@/modules/notifications/notifications.service';
+import { templateForStatus } from '@/modules/notifications/order-notification-templates';
+import { ContractsService } from '@/modules/contracts/contracts.service';
+import { QUEUE_FACTORY, type QueueFactory } from '@/shared/queue/queue.module';
+import { QUEUES } from '@/shared/queue/queue-names';
 import {
   InvalidTransitionError,
   nextStatus,
@@ -21,6 +26,9 @@ export class OrdersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly offers: OffersService,
+    private readonly notifications: NotificationsService,
+    private readonly contracts: ContractsService,
+    @Inject(QUEUE_FACTORY) private readonly queues: QueueFactory,
   ) {}
 
   /**
@@ -158,7 +166,16 @@ export class OrdersService {
         throw err;
       }
 
-      // TODO(M2 follow-up): enqueue expire-reservation BullMQ job at +15min.
+      // Enqueue a delayed job to release the reservation at +15min if the
+      // order hasn't advanced. Worker-process consumer applies the
+      // `expire` transition.
+      const delayMs = expiresAt.getTime() - Date.now();
+      await this.queues.get(QUEUES.RESERVATION_EXPIRY).add(
+        'expire',
+        { orderId: order.id },
+        { delay: Math.max(0, delayMs), jobId: `expire:${order.id}` },
+      );
+
       this.logger.log(
         { orderId: order.id, workerId: worker.id, expiresAt },
         'order reserved',
@@ -302,7 +319,62 @@ export class OrdersService {
         },
       });
 
-      return { from: order.status as OrderStatus, to };
+      const customerId = order.customerId;
+      const result = { from: order.status as OrderStatus, to };
+
+      // Post-commit side effects: contract issuance + customer notification.
+      // Fire-and-log; failures here do NOT roll back the transition.
+      queueMicrotask(() => {
+        this.applyPostTransitionSideEffects(orderId, customerId, to).catch((err) =>
+          this.logger.warn({ err, orderId, to }, 'post-transition side effects failed'),
+        );
+      });
+
+      return result;
+    });
+  }
+
+  private async applyPostTransitionSideEffects(
+    orderId: string,
+    customerId: string,
+    status: OrderStatus,
+  ): Promise<void> {
+    if (status === 'CONFIRMED') {
+      await this.contracts.issueFor(orderId).catch((err) =>
+        this.logger.error({ err, orderId }, 'contract issuance failed'),
+      );
+    }
+    if (status === 'REFUNDED' || status === 'CANCELLED') {
+      const contract = await this.prisma.contract.findUnique({
+        where: { orderId },
+        select: { id: true, status: true },
+      });
+      if (contract && contract.status === 'ACTIVE') {
+        await this.contracts
+          .voidContract(contract.id, `order ${status.toLowerCase()}`)
+          .catch((err) =>
+            this.logger.error({ err, orderId, contractId: contract.id }, 'contract void failed'),
+          );
+      }
+    }
+    await this.notifyCustomerOfStatus(orderId, customerId, status);
+  }
+
+  private async notifyCustomerOfStatus(
+    orderId: string,
+    customerId: string,
+    status: OrderStatus,
+  ): Promise<void> {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: { orderNumber: true },
+    });
+    if (!order) return;
+    const tpl = templateForStatus(status, order.orderNumber);
+    if (!tpl) return;
+    await this.notifications.send(customerId, tpl, {
+      relatedOrderId: orderId,
+      data: { orderId, status },
     });
   }
 

@@ -1,12 +1,17 @@
 import 'reflect-metadata';
+// Mark this process as a worker BEFORE any module loads — consumers check
+// this to decide whether to spin up BullMQ Workers.
+process.env.MAWARED_PROCESS = 'worker';
+
 import { NestFactory } from '@nestjs/core';
 import { Logger as PinoLogger } from 'nestjs-pino';
 import { AppModule } from './app.module';
 
 /**
  * Worker process bootstrap. Shares the same modules as the API but runs as a
- * standalone application (no HTTP listener). BullMQ consumer wiring lands in
- * M2 — for M0 this just boots, logs "ready", and stays alive for healthcheck.
+ * standalone application context (no HTTP listener). BullMQ consumers
+ * (e.g. ReservationExpiryConsumer) gate themselves on MAWARED_PROCESS === 'worker'
+ * so they only run here.
  */
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.createApplicationContext(AppModule, { bufferLogs: true });
@@ -15,7 +20,6 @@ async function bootstrap(): Promise<void> {
   const logger = app.get(PinoLogger);
   logger.log({ event: 'worker.ready' }, 'Mawared worker process ready');
 
-  // Keep the process alive until SIGTERM / SIGINT.
   process.on('SIGTERM', () => app.close().then(() => process.exit(0)));
   process.on('SIGINT', () => app.close().then(() => process.exit(0)));
 }

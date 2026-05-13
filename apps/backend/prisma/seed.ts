@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
 import { PrismaClient } from '@prisma/client';
+import * as argon2 from 'argon2';
 
 /**
  * Idempotent dev seed.
@@ -37,20 +38,28 @@ async function main(): Promise<void> {
   });
   console.log('[seed] branch upserted:', branch.code);
 
+  // Dev super-admin. Password is "ChangeMe!2026" — change in production.
+  const adminPasswordHash = await argon2.hash('ChangeMe!2026', { type: argon2.argon2id });
   const admin = await prisma.user.upsert({
     where: { email: 'admin@mawared.local' },
-    update: { isActive: true, role: 'SUPER_ADMIN', branchId: branch.id },
+    update: {
+      isActive: true,
+      role: 'SUPER_ADMIN',
+      branchId: branch.id,
+      passwordHash: adminPasswordHash,
+    },
     create: {
       email: 'admin@mawared.local',
       role: 'SUPER_ADMIN',
       isActive: true,
       branchId: branch.id,
+      passwordHash: adminPasswordHash,
       staffProfile: {
         create: { firstName: 'Super', lastName: 'Admin', title: 'Owner' },
       },
     },
   });
-  console.log('[seed] super-admin upserted:', admin.email);
+  console.log('[seed] super-admin upserted:', admin.email, '(password: ChangeMe!2026)');
 
   const nationalities = [
     { code: 'PH', nameAr: 'الفلبين', nameEn: 'Philippines', flagEmoji: '🇵🇭' },

@@ -6,6 +6,8 @@ import { LoggerModule } from './shared/logger/logger.module';
 import { PrismaModule } from './shared/prisma/prisma.module';
 import { RedisModule } from './shared/redis/redis.module';
 import { SmsModule } from './shared/sms/sms.module';
+import { QueueModule } from './shared/queue/queue.module';
+import { AuditModule } from './shared/audit/audit.service';
 import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
@@ -16,6 +18,8 @@ import { OffersModule } from './modules/offers/offers.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { ContractsModule } from './modules/contracts/contracts.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { RequestContextInterceptor } from './common/interceptors/request-context.interceptor';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
@@ -28,6 +32,8 @@ import { RolesGuard } from './common/guards/roles.guard';
     PrismaModule,
     RedisModule,
     SmsModule,
+    QueueModule,
+    AuditModule,
     ThrottlerModule.forRoot([
       { name: 'default', ttl: 60_000, limit: 120 },
       { name: 'auth', ttl: 60_000, limit: 10 },
@@ -42,6 +48,8 @@ import { RolesGuard } from './common/guards/roles.guard';
     OrdersModule,
     PaymentsModule,
     NotificationsModule,
+    ContractsModule,
+    AdminModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
