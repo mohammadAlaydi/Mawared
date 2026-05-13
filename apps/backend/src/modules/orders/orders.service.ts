@@ -6,6 +6,7 @@ import { PrismaService } from '@/shared/prisma/prisma.service';
 import { OffersService } from '@/modules/offers/offers.service';
 import { templateForStatus } from '@/modules/notifications/order-notification-templates';
 import { ContractsService } from '@/modules/contracts/contracts.service';
+import { VerificationsService } from '@/modules/verifications/verifications.service';
 import { QUEUE_FACTORY, type QueueFactory } from '@/shared/queue/queue.module';
 import { QUEUES } from '@/shared/queue/queue-names';
 import {
@@ -14,6 +15,7 @@ import {
   type OrderEvent,
 } from './order.entity';
 import { generateOrderNumber } from './order-number';
+import { displayForOrder } from './order-display-labels';
 import type { CreateOrderDto } from './dto/create-order.dto';
 
 const RESERVATION_TTL_MINUTES = 15;
@@ -26,6 +28,7 @@ export class OrdersService {
     private readonly prisma: PrismaService,
     private readonly offers: OffersService,
     private readonly contracts: ContractsService,
+    private readonly verifications: VerificationsService,
     @Inject(QUEUE_FACTORY) private readonly queues: QueueFactory,
   ) {}
 
@@ -38,6 +41,10 @@ export class OrdersService {
    * first won. See ADR-013.
    */
   async create(customerId: string, body: CreateOrderDto) {
+    // 0. Customer must have a valid Signit.sa verification before placing
+    //    an order. Spec §3 — Mawared feature list.
+    await this.verifications.assertCanOrder(customerId);
+
     return this.prisma.$transaction(async (tx) => {
       // 1. Lock on the worker so no other reservation can race us.
       const lockKey = this.bigintHash(`worker:${body.workerId}`);
@@ -228,7 +235,14 @@ export class OrdersService {
         HttpStatus.NOT_FOUND,
       );
     }
-    return order;
+    return {
+      ...order,
+      display: displayForOrder({
+        status: order.status,
+        hasContract: !!order.contract,
+        contractStatus: order.contract?.status ?? null,
+      }),
+    };
   }
 
   /**

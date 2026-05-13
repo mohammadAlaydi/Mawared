@@ -18,6 +18,7 @@ export class BranchesService {
         city: true,
         district: true,
         phoneE164: true,
+        whatsappE164: true,
         workingHoursAr: true,
         workingHoursEn: true,
         latitude: true,

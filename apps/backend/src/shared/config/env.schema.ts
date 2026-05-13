@@ -37,6 +37,13 @@ export const EnvSchema = z.object({
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
   STRIPE_PUBLISHABLE_KEY: z.string().optional(),
 
+  // Signit.sa identity verification
+  SIGNIT_BASE_URL: z.string().url().default('https://api.signit.sa'),
+  SIGNIT_API_KEY: z.string().optional(),
+  SIGNIT_WEBHOOK_SECRET: z.string().optional(),
+  SIGNIT_CALLBACK_URL: z.string().url().optional(),
+  VERIFICATION_TTL_DAYS: z.coerce.number().int().positive().default(365),
+
   S3_ENDPOINT: z.string().url().optional(),
   S3_REGION: z.string().default('auto'),
   S3_BUCKET: z.string().optional(),

@@ -32,13 +32,12 @@ async function bootstrap(): Promise<void> {
     });
   }
 
-  // Stripe webhook needs the raw body to verify signatures. Carve it out
-  // before Nest's JSON body parser fires.
-  const stripeRawBody = express.raw({ type: 'application/json' });
-  app.use('/v1/payments/webhooks/stripe', (req: Request, res, next) => {
-    stripeRawBody(req, res, (err) => {
+  // Webhooks need the raw body to verify signatures (Stripe, Signit). Carve
+  // each path out before Nest's JSON body parser fires.
+  const rawJson = express.raw({ type: 'application/json' });
+  const rawBodyHandler = (req: Request, res: import('express').Response, next: import('express').NextFunction): void => {
+    rawJson(req, res, (err) => {
       if (err) return next(err);
-      // Preserve the raw bytes for the controller and a parsed copy for logs.
       (req as Request & { rawBody?: Buffer }).rawBody = req.body as Buffer;
       try {
         if (Buffer.isBuffer(req.body)) {
@@ -49,7 +48,9 @@ async function bootstrap(): Promise<void> {
       }
       next();
     });
-  });
+  };
+  app.use('/v1/payments/webhooks/stripe', rawBodyHandler);
+  app.use('/v1/verifications/webhooks/signit', rawBodyHandler);
 
   app.use(helmet());
   app.enableCors({

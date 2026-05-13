@@ -42,8 +42,11 @@ datasource db {
 
 enum UserRole {
   CUSTOMER
-  STAFF
-  BRANCH_MANAGER
+  STAFF            // operations (default staff role per spec §9)
+  SALES            // can read customers + create promos, no order transitions
+  FINANCE          // can read payments + issue refunds; no worker/customer edits
+  SUPPORT          // can view orders + contact customers; no edits
+  BRANCH_MANAGER   // scoped to one branch
   SUPER_ADMIN
 }
 
@@ -155,6 +158,23 @@ enum LeadStatus {
   SPAM
 }
 
+/// Signit.sa identity verification status, mirroring the labels in the
+/// product spec (§3 of the feature list).
+enum VerificationStatus {
+  NOT_VERIFIED        // never attempted
+  PENDING             // Signit session initiated, awaiting completion / callback
+  VERIFIED            // valid until `verificationExpiresAt`
+  FAILED              // explicitly failed (mismatched ID, expired doc, etc.)
+  EXPIRED             // was VERIFIED but past expiry — requires re-verification
+}
+
+/// Each call to the Signit provider creates one row. Append-only audit
+/// log; the latest row for a customer drives `Customer.verificationStatus`.
+enum VerificationProvider {
+  SIGNIT
+  MANUAL              // staff-overridden via admin dashboard
+}
+
 // =====================================================================
 // CORE IDENTITY
 // =====================================================================
@@ -200,6 +220,13 @@ model Customer {
   lastName      String?
   preferredLocale String   @default("ar")          // "ar" | "en"
   notificationPrefs Json   @default("{\"push\":true,\"email\":false,\"sms\":false}")
+
+  // Signit.sa identity verification status. Customers must reach VERIFIED
+  // before they can place a worker order. See VerificationStatus.
+  verificationStatus VerificationStatus @default(NOT_VERIFIED)
+  verificationLastCheckedAt DateTime? @db.Timestamptz
+  verificationExpiresAt     DateTime? @db.Timestamptz
+  verifications IdentityVerification[]
 
   addresses     Address[]
   favorites     Favorite[]
@@ -299,6 +326,7 @@ model Branch {
   city           String
   district       String?
   phoneE164      String
+  whatsappE164   String?                          // optional WhatsApp Business number for click-to-chat
   workingHoursAr String                           // "8:00ص - 11:00م"
   workingHoursEn String?
   latitude       Decimal  @db.Decimal(10, 7)
@@ -898,6 +926,34 @@ model FeatureFlag {
 
   createdAt DateTime @default(now()) @db.Timestamptz
   updatedAt DateTime @updatedAt @db.Timestamptz
+}
+
+// =====================================================================
+// IDENTITY VERIFICATION (Signit.sa)
+// =====================================================================
+
+/// One row per verification attempt. The latest non-null `completedAt`
+/// row drives Customer.verificationStatus + expiresAt. We keep history
+/// for compliance (PDPL-style).
+model IdentityVerification {
+  id              String               @id @default(uuid()) @db.Uuid
+  customerId      String               @db.Uuid
+  customer        Customer             @relation(fields: [customerId], references: [userId], onDelete: Cascade)
+  provider        VerificationProvider @default(SIGNIT)
+  providerSessionId String?            @unique           // signit transaction id
+  status          VerificationStatus
+  redirectUrl     String?                                // URL we send the customer to
+  callbackPayload Json?                                  // raw provider webhook body for audit
+  failureReason   String?
+  initiatedAt     DateTime             @default(now()) @db.Timestamptz
+  completedAt     DateTime?            @db.Timestamptz
+  expiresAt       DateTime?            @db.Timestamptz   // when this verification stops counting as VERIFIED
+
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+
+  @@index([customerId, completedAt(sort: Desc)])
+  @@index([status, expiresAt])
 }
 
 // =====================================================================
