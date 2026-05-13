@@ -17,4 +17,8 @@ restartPolicyMaxRetries = 5
 # Pre-deploy: apply pending migrations from a one-off container before the
 # new app version replaces the old. Keep this OUT of main.ts so multi-replica
 # rollouts don't race.
-preDeployCommand = "cd apps/backend && pnpm prisma migrate deploy"
+#
+# Uses the globally-installed `prisma` CLI baked into the runtime stage of
+# apps/backend/Dockerfile (pnpm is not present at runtime). WORKDIR is
+# /repo/apps/backend, so the relative schema path resolves correctly.
+preDeployCommand = "prisma migrate deploy --schema=prisma/schema.prisma"

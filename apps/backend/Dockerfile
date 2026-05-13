@@ -43,6 +43,9 @@ RUN pnpm install --frozen-lockfile=false --filter @mawared/backend... --prod
 # ---- Stage 4: runtime ----
 FROM node:20-alpine AS runtime
 RUN apk add --no-cache tini openssl
+# Prisma CLI is needed at runtime for `prisma migrate deploy` (Railway preDeploy
+# hook). Pinned to match @prisma/client in package.json.
+RUN npm i -g prisma@5.20.0 && npm cache clean --force
 WORKDIR /repo/apps/backend
 ENV NODE_ENV=production \
     PORT=3000
