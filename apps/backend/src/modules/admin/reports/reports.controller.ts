@@ -35,4 +35,31 @@ export class ReportsController {
     @CurrentUser() actor: AuthUser,
     @Query(new ZodValidationPipe(ReportsQuerySchema)) q: ReportsQueryDto,
   ) {
-    re
+    return this.reports.refunds(q, actor);
+  }
+
+  /**
+   * Single-call rollup for the admin dashboard homepage. Combines yesterday's
+   * revenue (with day-before delta), 30-day revenue series, order counts by
+   * status, worker availability counts, new customer count, and the 10 most
+   * recent orders.
+   */
+  @Get('overview')
+  overview(
+    @CurrentUser() actor: AuthUser,
+    @Query(new ZodValidationPipe(OverviewQuerySchema)) q: OverviewQueryDto,
+  ) {
+    return this.reports.overview(actor, q.branchId);
+  }
+
+  /**
+   * Worker fleet breakdown: counts by availability status and by nationality.
+   */
+  @Get('active-workers')
+  activeWorkers(
+    @CurrentUser() actor: AuthUser,
+    @Query(new ZodValidationPipe(OverviewQuerySchema)) q: OverviewQueryDto,
+  ) {
+    return this.reports.activeWorkers(actor, q.branchId);
+  }
+}

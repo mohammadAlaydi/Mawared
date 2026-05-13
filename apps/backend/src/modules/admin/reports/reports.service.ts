@@ -137,4 +137,212 @@ export class ReportsService {
    *  - new customer count (last 30d)
    *  - 10 most recent orders
    *
-   * Branch managers a
+   * Branch managers are silently scoped to their own branch.
+   */
+  async overview(actor: AuthUser, requestedBranchId?: string) {
+    const branchId = this.effectiveBranch(actor, requestedBranchId);
+    const branchClauseOrder = branchId
+      ? Prisma.sql`AND o."branchId" = ${branchId}::uuid`
+      : Prisma.empty;
+    const branchClauseWorker = branchId
+      ? Prisma.sql`AND "branchId" = ${branchId}::uuid`
+      : Prisma.empty;
+
+    const now = new Date();
+    const startOfToday = new Date(now);
+    startOfToday.setUTCHours(0, 0, 0, 0);
+    const startOfYesterday = new Date(startOfToday);
+    startOfYesterday.setUTCDate(startOfYesterday.getUTCDate() - 1);
+    const startOfDayBefore = new Date(startOfYesterday);
+    startOfDayBefore.setUTCDate(startOfDayBefore.getUTCDate() - 1);
+    const thirtyDaysAgo = new Date(startOfToday);
+    thirtyDaysAgo.setUTCDate(thirtyDaysAgo.getUTCDate() - 30);
+
+    type RevenueRow = { currency: string; minor: bigint };
+    const [yesterdayRevenue, dayBeforeRevenue, last30Series] = await Promise.all([
+      this.prisma.$queryRaw<RevenueRow[]>(Prisma.sql`
+        SELECT o.currency, COALESCE(SUM(o."totalMinor"), 0)::bigint AS minor
+        FROM "Order" o
+        WHERE o."deletedAt" IS NULL
+          AND o.status::text IN ('PAID','UNDER_REVIEW','CONFIRMED','IN_PROGRESS','COMPLETED')
+          AND o."createdAt" >= ${startOfYesterday}
+          AND o."createdAt" <  ${startOfToday}
+          ${branchClauseOrder}
+        GROUP BY o.currency
+      `),
+      this.prisma.$queryRaw<RevenueRow[]>(Prisma.sql`
+        SELECT o.currency, COALESCE(SUM(o."totalMinor"), 0)::bigint AS minor
+        FROM "Order" o
+        WHERE o."deletedAt" IS NULL
+          AND o.status::text IN ('PAID','UNDER_REVIEW','CONFIRMED','IN_PROGRESS','COMPLETED')
+          AND o."createdAt" >= ${startOfDayBefore}
+          AND o."createdAt" <  ${startOfYesterday}
+          ${branchClauseOrder}
+        GROUP BY o.currency
+      `),
+      this.prisma.$queryRaw<{ day: Date; currency: string; minor: bigint }[]>(Prisma.sql`
+        SELECT date_trunc('day', o."createdAt") AS day,
+               o.currency,
+               COALESCE(SUM(o."totalMinor"), 0)::bigint AS minor
+        FROM "Order" o
+        WHERE o."deletedAt" IS NULL
+          AND o.status::text IN ('PAID','UNDER_REVIEW','CONFIRMED','IN_PROGRESS','COMPLETED')
+          AND o."createdAt" >= ${thirtyDaysAgo}
+          AND o."createdAt" <  ${startOfToday}
+          ${branchClauseOrder}
+        GROUP BY 1, 2
+        ORDER BY 1 ASC
+      `),
+    ]);
+
+    type StatusRow = { status: string; n: bigint };
+    const ordersByStatus = await this.prisma.$queryRaw<StatusRow[]>(Prisma.sql`
+      SELECT o.status::text AS status, COUNT(*)::bigint AS n
+      FROM "Order" o
+      WHERE o."deletedAt" IS NULL
+        ${branchClauseOrder}
+      GROUP BY o.status
+    `);
+
+    type WorkerRow = { availability: string; n: bigint };
+    const workersByAvailability = await this.prisma.$queryRaw<WorkerRow[]>(Prisma.sql`
+      SELECT availability::text AS availability, COUNT(*)::bigint AS n
+      FROM "Worker"
+      WHERE "deletedAt" IS NULL
+        ${branchClauseWorker}
+      GROUP BY availability
+    `);
+
+    const newCustomers30d = await this.prisma.customer.count({
+      where: { user: { createdAt: { gte: thirtyDaysAgo } } },
+    });
+
+    const recentOrders = await this.prisma.order.findMany({
+      where: {
+        deletedAt: null,
+        ...(branchId ? { branchId } : {}),
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+      select: {
+        id: true,
+        status: true,
+        currency: true,
+        totalMinor: true,
+        createdAt: true,
+        customer: {
+          select: {
+            firstName: true,
+            lastName: true,
+            user: { select: { phoneE164: true } },
+          },
+        },
+      },
+    });
+
+    return {
+      branchId: branchId ?? null,
+      revenue: {
+        yesterday: yesterdayRevenue.map((r) => ({
+          currency: r.currency,
+          minor: r.minor.toString(),
+        })),
+        dayBefore: dayBeforeRevenue.map((r) => ({
+          currency: r.currency,
+          minor: r.minor.toString(),
+        })),
+        last30Days: last30Series.map((r) => ({
+          day: r.day,
+          currency: r.currency,
+          minor: r.minor.toString(),
+        })),
+      },
+      ordersByStatus: ordersByStatus.map((r) => ({
+        status: r.status,
+        count: Number(r.n),
+      })),
+      workersByAvailability: workersByAvailability.map((r) => ({
+        availability: r.availability,
+        count: Number(r.n),
+      })),
+      newCustomers30d,
+      recentOrders: recentOrders.map((o) => ({
+        id: o.id,
+        status: o.status,
+        currency: o.currency,
+        totalMinor: o.totalMinor.toString(),
+        createdAt: o.createdAt,
+        customerName:
+          [o.customer?.firstName, o.customer?.lastName].filter(Boolean).join(' ') || null,
+        customerPhone: o.customer?.user?.phoneE164 ?? null,
+      })),
+    };
+  }
+
+  /**
+   * Worker fleet breakdown for the dashboard: counts by availability status
+   * and by nationality. Branch managers are scoped to their branch.
+   */
+  async activeWorkers(actor: AuthUser, requestedBranchId?: string) {
+    const branchId = this.effectiveBranch(actor, requestedBranchId);
+    const branchClause = branchId
+      ? Prisma.sql`AND w."branchId" = ${branchId}::uuid`
+      : Prisma.empty;
+
+    type AvailRow = { availability: string; n: bigint };
+    const byAvailability = await this.prisma.$queryRaw<AvailRow[]>(Prisma.sql`
+      SELECT w.availability::text AS availability, COUNT(*)::bigint AS n
+      FROM "Worker" w
+      WHERE w."deletedAt" IS NULL
+        ${branchClause}
+      GROUP BY w.availability
+    `);
+
+    type NationalityRow = {
+      nationality_id: string;
+      code: string;
+      name_ar: string;
+      name_en: string;
+      flag: string;
+      n: bigint;
+    };
+    const byNationality = await this.prisma.$queryRaw<NationalityRow[]>(Prisma.sql`
+      SELECT w."nationalityId" AS nationality_id,
+             n.code            AS code,
+             n."nameAr"        AS name_ar,
+             n."nameEn"        AS name_en,
+             n."flagEmoji"     AS flag,
+             COUNT(*)::bigint  AS n
+      FROM "Worker" w
+      JOIN "Nationality" n ON n.id = w."nationalityId"
+      WHERE w."deletedAt" IS NULL
+        ${branchClause}
+      GROUP BY w."nationalityId", n.code, n."nameAr", n."nameEn", n."flagEmoji"
+      ORDER BY n DESC
+    `);
+
+    const total = byAvailability.reduce((sum, r) => sum + Number(r.n), 0);
+
+    return {
+      branchId: branchId ?? null,
+      total,
+      byAvailability: byAvailability.map((r) => ({
+        availability: r.availability,
+        count: Number(r.n),
+      })),
+      byNationality: byNationality.map((r) => ({
+        nationalityId: r.nationality_id,
+        code: r.code,
+        nameAr: r.name_ar,
+        nameEn: r.name_en,
+        flagEmoji: r.flag,
+        count: Number(r.n),
+      })),
+    };
+  }
+
+  private effectiveBranch(actor: AuthUser, requested?: string): string | undefined {
+    if (actor.role === 'BRANCH_MANAGER') return actor.branchId;
+    return requested;
+  }
+}

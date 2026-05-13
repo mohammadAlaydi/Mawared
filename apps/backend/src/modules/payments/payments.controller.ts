@@ -57,3 +57,12 @@ export class PaymentsController {
   @HttpCode(200)
   async stripeWebhook(@Req() req: Request): Promise<{ received: true }> {
     const signature = req.headers['stripe-signature'];
+    const rawBody = (req as Request & { rawBody?: Buffer }).rawBody;
+    if (!rawBody || typeof signature !== 'string') {
+      throw new BadRequestException('missing raw body or signature header');
+    }
+    const event = this.provider.verifyWebhook(rawBody, signature);
+    await this.payments.ingestWebhook(event.providerEventId, event.type, event.payload);
+    return { received: true };
+  }
+}

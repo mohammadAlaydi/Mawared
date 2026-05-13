@@ -12,7 +12,9 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { Audit } from '@/common/decorators/audit.decorator';
 import { AuditInterceptor } from '@/common/interceptors/audit.interceptor';
+import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 import { AdminCustomersService } from './admin-customers.service';
+import { ListCustomersDto, ListCustomersSchema } from './dto/list-customers.dto';
 
 @ApiTags('admin-customers')
 @ApiBearerAuth()
@@ -23,7 +25,7 @@ export class AdminCustomersController {
   constructor(private readonly customers: AdminCustomersService) {}
 
   @Get()
-  list(@Query('q') q?: string) {
+  list(@Query(new ZodValidationPipe(ListCustomersSchema)) q: ListCustomersDto) {
     return this.customers.list(q);
   }
 

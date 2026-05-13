@@ -11,4 +11,17 @@ import { CatalogService } from './catalog.service';
 @ApiTags('catalog')
 @Controller({ version: '1' })
 export class CatalogController {
-  constructor(private readonly catalog: CatalogService)
+  constructor(private readonly catalog: CatalogService) {}
+
+  @Public()
+  @Get('services')
+  listServices() {
+    return this.catalog.listServices();
+  }
+
+  @Public()
+  @Get('services/:id/packages')
+  listPackages(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+    return this.catalog.listPackages(id);
+  }
+}

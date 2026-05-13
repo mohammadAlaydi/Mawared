@@ -15,6 +15,7 @@ import { UsersModule } from './modules/users/users.module';
 import { WorkersModule } from './modules/workers/workers.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { BranchesModule } from './modules/branches/branches.module';
+import { NationalitiesModule } from './modules/nationalities/nationalities.module';
 import { OffersModule } from './modules/offers/offers.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { PaymentsModule } from './modules/payments/payments.module';
@@ -50,6 +51,7 @@ import { RolesGuard } from './common/guards/roles.guard';
     WorkersModule,
     CatalogModule,
     BranchesModule,
+    NationalitiesModule,
     OffersModule,
     OrdersModule,
     PaymentsModule,
@@ -69,4 +71,4 @@ import { RolesGuard } from './common/guards/roles.guard';
     { provide: APP_GUARD, useClass: RolesGuard },
   ],
 })
-export class Ap
+export class AppModule {}
