@@ -84,10 +84,12 @@ CREATE INDEX worker_fullnameen_trgm_idx ON "Worker" USING GIN ("fullNameEn" gin_
 --   * Every CUSTOMER must have a phone.
 --   * Every non-CUSTOMER (STAFF / BRANCH_MANAGER / SUPER_ADMIN) must have an email.
 -- -------------------------------------------------------------------
+-- Active customers must have a phone; soft-deleted users are exempt so we can
+-- anonymize identifiers on account deletion.
 ALTER TABLE "User"
   ADD CONSTRAINT user_phone_when_customer
-  CHECK (role <> 'CUSTOMER' OR "phoneE164" IS NOT NULL);
+  CHECK ("deletedAt" IS NOT NULL OR role <> 'CUSTOMER' OR "phoneE164" IS NOT NULL);
 
 ALTER TABLE "User"
   ADD CONSTRAINT user_email_when_staff
-  CHECK (role = 'CUSTOMER' OR email IS NOT NULL);
+  CHECK ("deletedAt" IS NOT NULL OR role = 'CUSTOMER' OR email IS NOT NULL);
