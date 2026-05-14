@@ -3,7 +3,7 @@ module.exports = {
     {
       name: 'mawared-backend',
       script: 'dist/main.js',
-      cwd: '/home/ubuntu/mawared/apps/backend',
+      cwd: '/home/ubuntu/Mawared/apps/backend',
       instances: 1,
       exec_mode: 'fork',
       autorestart: true,
