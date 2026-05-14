@@ -11,3 +11,19 @@
   },
   "include": ["src/**/*", "test/**/*", "prisma/seed.ts", "scripts/**/*"]
 }
+
+// CREATE DATABASE mawared;
+// CREATE USER mawared_user WITH PASSWORD 'mawared@123';
+// GRANT ALL PRIVILEGES ON DATABASE mawared TO mawared_user;
+// \q
+
+
+// 
+
+
+
+// ____________________________
+
+
+
+// 
