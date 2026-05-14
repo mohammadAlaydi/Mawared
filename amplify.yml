@@ -1,0 +1,46 @@
+version: 1
+applications:
+  - appRoot: website-next
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - npm install -g pnpm@9
+            - cd ../
+            - pnpm install
+            - pnpm --filter @mawared/shared-types build
+        build:
+          commands:
+            - pnpm --filter @mawared/shared-types build
+            - pnpm --filter website-next build
+      artifacts:
+        baseDirectory: out
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - ../node_modules/**/*
+          - ../packages/shared-types/dist/**/*
+  - appRoot: admin-dashboard
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - npm install -g pnpm@9
+            - cd ../
+            - pnpm install
+            - pnpm --filter @mawared/shared-types build
+            - pnpm --filter @mawared/api-client build
+        build:
+          commands:
+            - pnpm --filter admin-dashboard build
+      artifacts:
+        baseDirectory: .next
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - .next/cache/**/*
+          - ../node_modules/**/*
+          - ../packages/shared-types/dist/**/*
+          - ../packages/api-client-ts/dist/**/*
