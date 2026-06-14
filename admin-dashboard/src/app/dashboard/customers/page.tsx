@@ -94,8 +94,8 @@ export default function CustomersPage() {
         }
       />
 
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-4 flex flex-wrap gap-3 items-center">
-        <div className="relative flex-1 min-w-[200px]">
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-4 flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:items-center">
+        <div className="relative w-full sm:flex-1 sm:min-w-[200px]">
           <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             value={phoneFilter}
@@ -106,12 +106,12 @@ export default function CustomersPage() {
             }}
             placeholder="بحث برقم الجوال (E.164، مثلاً +966...)"
             dir="ltr"
-            className="w-full pr-9 pl-4 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm text-left focus:outline-none focus:ring-2 focus:ring-[#0B5E50]/20"
+            className="w-full pr-9 pl-4 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm text-left focus:outline-none focus:ring-2 focus:ring-[#2D5BE4]/20"
           />
         </div>
         {query.isFetching && (
           <span className="text-xs text-gray-400 inline-flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#0B5E50] animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-[#2D5BE4] animate-pulse" />
             تحديث...
           </span>
         )}
@@ -136,17 +136,17 @@ export default function CustomersPage() {
         </div>
       )}
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm min-w-[720px]">
             <thead>
               <tr className="bg-gray-50">
                 <th className="text-right px-4 py-3 font-semibold text-gray-600">الاسم</th>
                 <th className="text-right px-4 py-3 font-semibold text-gray-600">رقم الجوال</th>
-                <th className="text-right px-4 py-3 font-semibold text-gray-600">البريد الإلكتروني</th>
-                <th className="text-right px-4 py-3 font-semibold text-gray-600">حالة التحقق</th>
+                <th className="text-right px-4 py-3 font-semibold text-gray-600 hidden lg:table-cell">البريد الإلكتروني</th>
+                <th className="text-right px-4 py-3 font-semibold text-gray-600 hidden md:table-cell">حالة التحقق</th>
                 <th className="text-right px-4 py-3 font-semibold text-gray-600">الحالة</th>
-                <th className="text-right px-4 py-3 font-semibold text-gray-600">تاريخ التسجيل</th>
+                <th className="text-right px-4 py-3 font-semibold text-gray-600 hidden md:table-cell">تاريخ التسجيل</th>
                 <th className="text-right px-4 py-3 font-semibold text-gray-600">إجراءات</th>
               </tr>
             </thead>
@@ -157,15 +157,15 @@ export default function CustomersPage() {
                   const fullName = [c.firstName, c.lastName].filter(Boolean).join(' ') || '—';
                   const verify = VERIFICATION_DISPLAY[c.verificationStatus];
                   return (
-                    <tr key={c.userId} className="border-t border-gray-50 hover:bg-gray-50/50 relative">
+                    <tr key={c.userId} className="border-t border-gray-50 hover:bg-gray-50/50">
                       <td className="px-4 py-3 font-medium">{fullName}</td>
                       <td className="px-4 py-3" dir="ltr">
                         {c.phoneE164}
                       </td>
-                      <td className="px-4 py-3 text-gray-500" dir="ltr">
+                      <td className="px-4 py-3 text-gray-500 hidden lg:table-cell" dir="ltr">
                         {c.email ?? '—'}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 hidden md:table-cell">
                         <span className={`px-2 py-1 rounded-lg text-xs font-semibold ${verify.cls}`}>
                           {verify.label}
                         </span>
@@ -181,7 +181,7 @@ export default function CustomersPage() {
                           {c.isSuspended ? 'موقوف' : 'نشِط'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-gray-500">{formatDate(c.createdAt)}</td>
+                      <td className="px-4 py-3 text-gray-500 hidden md:table-cell">{formatDate(c.createdAt)}</td>
                       <td className="px-4 py-3 relative">
                         <button
                           onClick={() => setOpenMenu(openMenu === c.userId ? null : c.userId)}
@@ -243,7 +243,7 @@ export default function CustomersPage() {
             <button
               onClick={goNext}
               disabled={!query.data?.nextCursor}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium bg-[#0B5E50] text-white hover:bg-[#073D34] disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium bg-[#2D5BE4] text-white hover:bg-[#0F234C] disabled:opacity-40 disabled:cursor-not-allowed"
             >
               التالي
               <ChevronLeft size={14} />

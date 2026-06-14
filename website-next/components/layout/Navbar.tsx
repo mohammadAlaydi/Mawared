@@ -62,26 +62,21 @@ export default function Navbar() {
           : "bg-transparent py-4"
       }`}
     >
-      <nav className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 flex items-center justify-between">
+      <nav className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 flex items-center justify-between gap-3">
         {/* Logo */}
-        <a href="#hero" className="flex items-center gap-3 group">
-          <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-md group-hover:shadow-brand-500/30 transition-shadow duration-300">
-            <Image
-              src="/images/logo-full.png"
-              alt="موارد الدولية"
-              fill
-              className="object-contain"
-              priority
-            />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-lg font-bold text-brand-900 leading-tight">
-              موارد
-            </span>
-            <span className="text-[10px] text-brand-600 font-medium -mt-1">
-              الدولية للإستقدام
-            </span>
-          </div>
+        <a
+          href="#hero"
+          className="flex items-center group shrink-0"
+          aria-label="موارد الدولية"
+        >
+          <Image
+            src="/brand/logo-wide.svg"
+            alt="موارد الدولية"
+            width={160}
+            height={40}
+            priority
+            className="h-9 sm:h-10 w-auto transition-transform duration-300 group-hover:scale-[1.03]"
+          />
         </a>
 
         {/* Desktop Links */}
@@ -112,7 +107,7 @@ export default function Navbar() {
         {/* CTA Button */}
         <a
           href="#download"
-          className="hidden lg:inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg shadow-brand-600/25 hover:shadow-brand-700/30 transition-all duration-300 hover:-translate-y-0.5"
+          className="hidden lg:inline-flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg shadow-brand-500/25 hover:shadow-brand-700/30 transition-all duration-300 hover:-translate-y-0.5"
         >
           <svg
             width="18"
@@ -182,21 +177,17 @@ export default function Navbar() {
           >
             {/* Mobile Header */}
             <div className="flex items-center justify-between p-5 border-b border-gray-100">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg overflow-hidden">
-                  <Image
-                    src="/images/logo-full.png"
-                    alt="موارد"
-                    width={32}
-                    height={32}
-                    className="object-contain"
-                  />
-                </div>
-                <span className="font-bold text-brand-900">موارد الدولية</span>
-              </div>
+              <Image
+                src="/brand/logo-wide.svg"
+                alt="موارد الدولية"
+                width={140}
+                height={36}
+                className="h-8 w-auto"
+              />
               <button
                 onClick={() => setMobileOpen(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100"
+                className="w-10 h-10 flex items-center justify-center rounded-lg text-brand-900 hover:bg-gray-100 transition-colors"
+                aria-label="إغلاق القائمة"
               >
                 ✕
               </button>
@@ -214,7 +205,7 @@ export default function Navbar() {
                   onClick={() => setMobileOpen(false)}
                   className={`block px-6 py-3.5 text-base font-medium transition-colors ${
                     activeSection === link.href.slice(1)
-                      ? "text-brand-700 bg-brand-50 border-r-4 border-brand-500"
+                      ? "text-brand-700 bg-brand-50 border-l-4 border-brand-500"
                       : "text-gray-700 hover:bg-gray-50"
                   }`}
                 >
@@ -228,7 +219,7 @@ export default function Navbar() {
               <a
                 href="#download"
                 onClick={() => setMobileOpen(false)}
-                className="flex items-center justify-center gap-2 bg-brand-600 text-white py-3 rounded-xl font-semibold shadow-lg shadow-brand-600/25"
+                className="flex items-center justify-center gap-2 bg-brand-500 text-white py-3 rounded-xl font-semibold shadow-lg shadow-brand-500/25"
               >
                 حمّل التطبيق الآن
               </a>

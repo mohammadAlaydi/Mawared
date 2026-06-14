@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useInView } from "framer-motion";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type SubmitState =
   | { status: "idle" }
@@ -50,6 +50,15 @@ export default function ContactSection() {
   const [submitState, setSubmitState] = useState<SubmitState>({
     status: "idle",
   });
+  const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear any pending success-banner timer on unmount to avoid setting state
+  // on an unmounted component.
+  useEffect(() => {
+    return () => {
+      if (successTimerRef.current) clearTimeout(successTimerRef.current);
+    };
+  }, []);
 
   const resetForm = () => {
     setFullName("");
@@ -148,7 +157,11 @@ export default function ContactSection() {
         setSubmitState({ status: "success" });
         resetForm();
         // Reset the success banner after a few seconds so the form is usable again.
-        setTimeout(() => setSubmitState({ status: "idle" }), 5000);
+        if (successTimerRef.current) clearTimeout(successTimerRef.current);
+        successTimerRef.current = setTimeout(
+          () => setSubmitState({ status: "idle" }),
+          5000,
+        );
         return;
       }
 
@@ -193,13 +206,13 @@ export default function ContactSection() {
   const isSubmitting = submitState.status === "submitting";
 
   return (
-    <section id="contact-form" ref={ref} className="relative py-24 overflow-hidden">
+    <section id="contact-form" ref={ref} className="relative py-16 sm:py-24 overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-white" />
-      <div className="absolute top-0 left-0 w-80 h-80 bg-brand-400/5 rounded-full blur-[150px]" />
+      <div className="pointer-events-none absolute top-0 left-0 w-80 h-80 max-w-[80vw] bg-brand-300/5 rounded-full blur-[150px]" />
 
-      <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-        <div className="grid lg:grid-cols-2 gap-16">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-8 lg:px-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
           {/* Info Side */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
@@ -211,7 +224,7 @@ export default function ContactSection() {
               <span className="inline-block text-sm font-semibold text-brand-600 bg-brand-50 rounded-full px-4 py-1.5 mb-4">
                 تواصل معنا
               </span>
-              <h2 className="text-3xl sm:text-4xl font-black text-brand-950 mb-4">
+              <h2 className="text-2xl sm:text-4xl font-black text-brand-950 mb-4">
                 نسعد <span className="gradient-text">بخدمتك</span>
               </h2>
               <p className="text-gray-600 leading-relaxed">
@@ -282,9 +295,9 @@ export default function ContactSection() {
             <form
               onSubmit={handleSubmit}
               noValidate
-              className="bg-surface-50 rounded-3xl p-8 border border-gray-100 shadow-sm space-y-5"
+              className="bg-surface-50 rounded-3xl p-5 sm:p-8 border border-gray-100 shadow-sm space-y-5"
             >
-              <div className="grid sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="contact-name" className="block text-sm font-medium text-gray-700 mb-2">
                     الاسم الكامل
@@ -300,7 +313,7 @@ export default function ContactSection() {
                     disabled={isSubmitting}
                     minLength={2}
                     maxLength={120}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all disabled:opacity-60"
+                    className="w-full min-h-[44px] px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all disabled:opacity-60"
                     required
                   />
                 </div>
@@ -318,7 +331,7 @@ export default function ContactSection() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     disabled={isSubmitting}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all text-left disabled:opacity-60"
+                    className="w-full min-h-[44px] px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all text-left disabled:opacity-60"
                     required
                   />
                 </div>
@@ -338,7 +351,7 @@ export default function ContactSection() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isSubmitting}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all text-left disabled:opacity-60"
+                  className="w-full min-h-[44px] px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all text-left disabled:opacity-60"
                 />
               </div>
 
@@ -352,7 +365,7 @@ export default function ContactSection() {
                   value={serviceType}
                   onChange={(e) => setServiceType(e.target.value)}
                   disabled={isSubmitting}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all disabled:opacity-60"
+                  className="w-full min-h-[44px] px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all disabled:opacity-60"
                 >
                   <option value="">اختر الخدمة</option>
                   {SERVICE_TYPES.map((type) => (
@@ -377,7 +390,7 @@ export default function ContactSection() {
                   disabled={isSubmitting}
                   minLength={2}
                   maxLength={2000}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all resize-none disabled:opacity-60"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all resize-none disabled:opacity-60"
                   required
                 />
               </div>
@@ -394,7 +407,7 @@ export default function ContactSection() {
               {submitState.status === "success" && (
                 <div
                   role="status"
-                  className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700"
+                  className="rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-600"
                 >
                   ✓ تم استلام رسالتك بنجاح. سنتواصل معك قريباً.
                 </div>

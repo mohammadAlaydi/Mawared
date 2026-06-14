@@ -11,6 +11,16 @@ import express, { type Request } from 'express';
 import { AppModule } from './app.module';
 import type { Env } from './shared/config/env.schema';
 
+// Money is stored as BigInt minor units (see AGENTS.md). BigInt is not
+// JSON-serializable by default — JSON.stringify throws "Do not know how to
+// serialize a BigInt", which 500s every response carrying a money field
+// (workers, orders, payments, packages...). Serialize BigInt as a decimal
+// string, which is the wire contract the API clients already expect.
+// eslint-disable-next-line no-extend-native, @typescript-eslint/no-explicit-any
+(BigInt.prototype as any).toJSON = function (this: bigint): string {
+  return this.toString();
+};
+
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bufferLogs: true,
@@ -35,7 +45,11 @@ async function bootstrap(): Promise<void> {
   // Webhooks need the raw body to verify signatures (Stripe, Signit). Carve
   // each path out before Nest's JSON body parser fires.
   const rawJson = express.raw({ type: 'application/json' });
-  const rawBodyHandler = (req: Request, res: import('express').Response, next: import('express').NextFunction): void => {
+  const rawBodyHandler = (
+    req: Request,
+    res: import('express').Response,
+    next: import('express').NextFunction,
+  ): void => {
     rawJson(req, res, (err) => {
       if (err) return next(err);
       (req as Request & { rawBody?: Buffer }).rawBody = req.body as Buffer;

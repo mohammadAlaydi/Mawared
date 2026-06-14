@@ -262,6 +262,35 @@ export interface PublicStats {
   computedAt: string;
 }
 
+// ===== Admin notifications =====
+
+export type AdminNotificationType =
+  | 'LEAD'
+  | 'ORDER_REVIEW'
+  | 'ORDER_PAID'
+  | 'CUSTOMER_NEW'
+  | 'VERIFICATION_PENDING';
+
+export interface AdminNotification {
+  /** Stable across requests: `${type}:${entityId}`. Used for client read-state. */
+  id: string;
+  type: AdminNotificationType;
+  titleAr: string;
+  descriptionAr: string | null;
+  customerName: string | null;
+  customerPhone: string | null;
+  customerEmail: string | null;
+  /** Dashboard route to open on click, or null for purely informational items. */
+  href: string | null;
+  entityId: string;
+  createdAt: string;
+}
+
+export interface AdminNotificationsResponse {
+  items: AdminNotification[];
+  generatedAt: string;
+}
+
 // ===== Admin reports =====
 
 export interface AdminOverviewResponse {

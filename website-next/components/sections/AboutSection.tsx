@@ -18,7 +18,7 @@ export default function AboutSection() {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <section id="about" ref={ref} className="relative py-24 overflow-hidden">
+    <section id="about" ref={ref} className="relative py-16 sm:py-24 overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-brand-950" />
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-800/40 rounded-full blur-[200px]" />
@@ -27,24 +27,28 @@ export default function AboutSection() {
       {/* Noise Overlay */}
       <div className="absolute inset-0 noise-overlay" />
 
-      <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-8 lg:px-12">
+        <div className="grid lg:grid-cols-2 gap-10 sm:gap-12 lg:gap-16 items-center">
           {/* Image Side */}
           <motion.div
-            initial={{ opacity: 0, x: 40 }}
+            initial={{ opacity: 0, x: -40 }}
             animate={isInView ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.8 }}
-            className="relative"
+            className="relative px-2 sm:px-0 pb-8 sm:pb-10"
           >
-            <div className="relative rounded-3xl overflow-hidden shadow-2xl">
-              <Image
-                src="/images/office.png"
-                alt="مكتب موارد الدولية"
-                width={600}
-                height={450}
-                className="object-cover w-full h-[400px]"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-brand-950/60 via-transparent to-transparent" />
+            {/* Brand frame */}
+            <div className="relative rounded-3xl p-1 bg-gradient-to-br from-brand-300 via-brand-500 to-accent-400 shadow-2xl shadow-brand-900/40">
+              <div className="relative rounded-[1.35rem] overflow-hidden">
+                <Image
+                  src="/images/about/about.png"
+                  alt="شركة موارد الدولية للاستقدام"
+                  width={600}
+                  height={450}
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="object-cover w-full h-[320px] sm:h-[400px]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-brand-950/60 via-transparent to-transparent" />
+              </div>
             </div>
 
             {/* Floating Stats Card */}
@@ -52,14 +56,14 @@ export default function AboutSection() {
               initial={{ opacity: 0, scale: 0.8 }}
               animate={isInView ? { opacity: 1, scale: 1 } : {}}
               transition={{ delay: 0.5, type: "spring" }}
-              className="absolute -bottom-6 -left-6 bg-white rounded-2xl p-5 shadow-2xl"
+              className="absolute -bottom-5 left-1 sm:-bottom-6 sm:-left-6 bg-white rounded-2xl p-4 sm:p-5 shadow-2xl"
             >
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-lg shadow-brand-500/30">
-                  <span className="text-2xl font-black text-white">+5</span>
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-lg shadow-brand-500/30 shrink-0">
+                  <span className="text-xl sm:text-2xl font-black text-white font-manrope">+5</span>
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-gray-900">سنوات خبرة</p>
+                  <p className="text-base sm:text-lg font-bold text-gray-900">سنوات خبرة</p>
                   <p className="text-xs text-gray-500">في مجال الاستقدام</p>
                 </div>
               </div>
@@ -68,7 +72,7 @@ export default function AboutSection() {
 
           {/* Text Side */}
           <motion.div
-            initial={{ opacity: 0, x: -40 }}
+            initial={{ opacity: 0, x: 40 }}
             animate={isInView ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.8, delay: 0.2 }}
             className="space-y-8"

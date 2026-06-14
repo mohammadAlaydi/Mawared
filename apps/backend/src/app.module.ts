@@ -41,9 +41,16 @@ import { RolesGuard } from './common/guards/roles.guard';
     QueueModule,
     AuditModule,
     FeatureFlagsModule,
+    // Rate limiting. The 'default' bucket governs ordinary interactive use
+    // (dashboard navigation, list/detail reads, polling). 120/min was far too
+    // tight — a single admin page can fan out to a dozen requests, so normal
+    // browsing tripped 429s. 600/min (10 req/sec sustained) leaves generous
+    // headroom for humans while still capping genuine floods. The 'auth'
+    // bucket stays deliberately strict: login/OTP is the real abuse surface,
+    // so it keeps a tight per-minute cap.
     ThrottlerModule.forRoot([
-      { name: 'default', ttl: 60_000, limit: 120 },
-      { name: 'auth', ttl: 60_000, limit: 10 },
+      { name: 'default', ttl: 60_000, limit: 600 },
+      { name: 'auth', ttl: 60_000, limit: 15 },
     ]),
     HealthModule,
     AuthModule,

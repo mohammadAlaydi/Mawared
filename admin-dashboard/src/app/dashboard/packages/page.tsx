@@ -77,7 +77,7 @@ export default function PackagesPage() {
             onClick={() => setShowAdd(true)}
             disabled={services.length === 0}
             title={services.length === 0 ? 'يجب إنشاء خدمة قبل الباقة' : ''}
-            className="flex items-center gap-2 px-4 py-2 bg-[#0B5E50] text-white rounded-xl text-sm font-semibold hover:bg-[#073D34] disabled:opacity-60 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-2 bg-[#2D5BE4] text-white rounded-xl text-sm font-semibold hover:bg-[#0F234C] disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <Plus size={16} />
             إضافة باقة
@@ -88,13 +88,13 @@ export default function PackagesPage() {
       <div className="flex gap-2 mb-4">
         <button
           onClick={() => setTab('MONTHLY')}
-          className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${tab === 'MONTHLY' ? 'bg-[#0B5E50] text-white' : 'bg-white text-gray-600 border border-gray-200'}`}
+          className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${tab === 'MONTHLY' ? 'bg-[#2D5BE4] text-white' : 'bg-white text-gray-600 border border-gray-200'}`}
         >
           شهري
         </button>
         <button
           onClick={() => setTab('HOURLY')}
-          className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${tab === 'HOURLY' ? 'bg-[#0B5E50] text-white' : 'bg-white text-gray-600 border border-gray-200'}`}
+          className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${tab === 'HOURLY' ? 'bg-[#2D5BE4] text-white' : 'bg-white text-gray-600 border border-gray-200'}`}
         >
           بالساعة
         </button>
@@ -113,7 +113,7 @@ export default function PackagesPage() {
       )}
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full min-w-[760px] text-sm">
           <thead>
             <tr className="bg-gray-50">
               <th className="text-right px-4 py-3 font-semibold text-gray-600">الاسم</th>
@@ -148,7 +148,7 @@ export default function PackagesPage() {
                     {servicesById.get(p.serviceId)?.nameAr ?? p.serviceId.slice(0, 8)}
                   </td>
                   <td className="px-4 py-3">
-                    <span className="px-2 py-0.5 rounded-lg text-xs font-medium bg-[#0B5E50]/10 text-[#0B5E50]">
+                    <span className="px-2 py-0.5 rounded-lg text-xs font-medium bg-[#2D5BE4]/10 text-[#2D5BE4]">
                       {PACKAGE_TYPE_LABELS[p.type]}
                     </span>
                   </td>
@@ -173,23 +173,25 @@ export default function PackagesPage() {
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 flex gap-1">
-                    <button
-                      onClick={() => setEditPkg(p)}
-                      className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500"
-                      title="تعديل"
-                    >
-                      <Pencil size={14} />
-                    </button>
-                    {p.isActive && (
+                  <td className="px-4 py-3">
+                    <div className="flex gap-1">
                       <button
-                        onClick={() => setConfirmDeactivate(p)}
-                        className="p-1.5 rounded-lg hover:bg-red-50 text-red-400"
-                        title="تعطيل"
+                        onClick={() => setEditPkg(p)}
+                        className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500"
+                        title="تعديل"
                       >
-                        <PowerOff size={14} />
+                        <Pencil size={14} />
                       </button>
-                    )}
+                      {p.isActive && (
+                        <button
+                          onClick={() => setConfirmDeactivate(p)}
+                          className="p-1.5 rounded-lg hover:bg-red-50 text-red-400"
+                          title="تعطيل"
+                        >
+                          <PowerOff size={14} />
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -394,7 +396,7 @@ function PackageFormModal({
             className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm resize-none"
           />
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="text-xs text-gray-500">النوع</label>
               <select
@@ -489,7 +491,7 @@ function PackageFormModal({
           <button
             onClick={handleSave}
             disabled={mutation.isPending}
-            className="flex-1 py-2.5 bg-[#0B5E50] text-white rounded-xl font-semibold disabled:opacity-60"
+            className="flex-1 py-2.5 bg-[#2D5BE4] text-white rounded-xl font-semibold disabled:opacity-60"
           >
             {mutation.isPending ? 'جاري الحفظ...' : 'حفظ'}
           </button>

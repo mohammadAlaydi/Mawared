@@ -137,7 +137,7 @@ export default function PaymentsPage() {
         />
       </div>
 
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-4 flex flex-wrap gap-3 items-center">
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-4 flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:items-center">
         <select
           value={statusFilter}
           onChange={(e) => {
@@ -145,7 +145,7 @@ export default function PaymentsPage() {
             setCursor(undefined);
             setCursorStack([]);
           }}
-          className="px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm"
+          className="w-full sm:w-auto px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm"
         >
           <option value="all">جميع الحالات</option>
           {PAYMENT_STATUSES.map((s) => (
@@ -154,7 +154,7 @@ export default function PaymentsPage() {
             </option>
           ))}
         </select>
-        <div className="flex items-center gap-2 text-sm">
+        <div className="flex flex-wrap items-center gap-2 text-sm">
           <label className="text-gray-500">من</label>
           <input
             type="date"
@@ -164,7 +164,7 @@ export default function PaymentsPage() {
               setCursor(undefined);
               setCursorStack([]);
             }}
-            className="px-3 py-1.5 rounded-xl border border-gray-200 bg-gray-50"
+            className="min-w-0 flex-1 sm:flex-none px-3 py-1.5 rounded-xl border border-gray-200 bg-gray-50"
           />
           <label className="text-gray-500">إلى</label>
           <input
@@ -175,15 +175,18 @@ export default function PaymentsPage() {
               setCursor(undefined);
               setCursorStack([]);
             }}
-            className="px-3 py-1.5 rounded-xl border border-gray-200 bg-gray-50"
+            className="min-w-0 flex-1 sm:flex-none px-3 py-1.5 rounded-xl border border-gray-200 bg-gray-50"
           />
         </div>
-        <button onClick={resetFilters} className="text-sm text-gray-500 hover:text-[#0B5E50]">
+        <button
+          onClick={resetFilters}
+          className="text-start text-sm text-gray-500 hover:text-[#2D5BE4]"
+        >
           إعادة تعيين
         </button>
         {query.isFetching && (
-          <span className="text-xs text-gray-400 mr-auto inline-flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#0B5E50] animate-pulse" />
+          <span className="text-xs text-gray-400 sm:ms-auto inline-flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-[#2D5BE4] animate-pulse" />
             تحديث...
           </span>
         )}
@@ -210,7 +213,7 @@ export default function PaymentsPage() {
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[820px] text-sm">
             <thead>
               <tr className="bg-gray-50">
                 <th className="text-right px-4 py-3 font-semibold text-gray-600">معاملة #</th>
@@ -227,7 +230,7 @@ export default function PaymentsPage() {
               {!query.isPending &&
                 payments.map((p) => (
                   <tr key={p.id} className="border-t border-gray-50 hover:bg-gray-50/50">
-                    <td className="px-4 py-3 font-mono text-[#0B5E50]">
+                    <td className="px-4 py-3 font-mono text-[#2D5BE4]">
                       {p.id.slice(0, 8).toUpperCase()}
                     </td>
                     <td className="px-4 py-3 font-mono" dir="ltr">
@@ -277,7 +280,7 @@ export default function PaymentsPage() {
             <button
               onClick={goNext}
               disabled={!query.data?.nextCursor}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium bg-[#0B5E50] text-white hover:bg-[#073D34] disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium bg-[#2D5BE4] text-white hover:bg-[#0F234C] disabled:opacity-40 disabled:cursor-not-allowed"
             >
               التالي
               <ChevronLeft size={14} />

@@ -24,6 +24,8 @@ import { AdminVerificationsController } from './verifications/admin-verification
 import { AdminCatalogService } from './catalog/admin-catalog.service';
 import { AdminCatalogController } from './catalog/admin-catalog.controller';
 import { AdminPaymentsController } from './payments/admin-payments.controller';
+import { AdminNotificationsService } from './notifications/admin-notifications.service';
+import { AdminNotificationsController } from './notifications/admin-notifications.controller';
 
 @Module({
   imports: [AuthModule, OrdersModule, PaymentsModule, VerificationsModule],
@@ -41,6 +43,7 @@ import { AdminPaymentsController } from './payments/admin-payments.controller';
     AdminVerificationsController,
     AdminCatalogController,
     AdminPaymentsController,
+    AdminNotificationsController,
   ],
   providers: [
     AdminAuthService,
@@ -51,6 +54,7 @@ import { AdminPaymentsController } from './payments/admin-payments.controller';
     AdminStaffService,
     ReportsService,
     AdminCatalogService,
+    AdminNotificationsService,
   ],
 })
 export class AdminModule {}

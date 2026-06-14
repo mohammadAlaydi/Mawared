@@ -60,29 +60,24 @@ export default function Footer() {
     <footer className="relative bg-brand-950 text-white overflow-hidden" id="contact">
       {/* Decorative Elements */}
       <div className="absolute top-0 left-0 w-96 h-96 bg-brand-800/20 rounded-full blur-[150px]" />
-      <div className="absolute bottom-0 right-0 w-80 h-80 bg-accent-500/10 rounded-full blur-[120px]" />
+      <div className="absolute bottom-0 right-0 w-80 h-80 bg-accent-400/10 rounded-full blur-[120px]" />
 
       {/* Main Footer */}
       <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 pt-16 pb-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8 mb-12">
           {/* Brand Column */}
           <div className="lg:col-span-2 space-y-5">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl overflow-hidden bg-white/10 p-1">
-                <Image
-                  src="/images/logo-full.png"
-                  alt="موارد الدولية"
-                  width={48}
-                  height={48}
-                  className="object-contain"
-                />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold">موارد الدولية</h3>
-                <p className="text-xs text-brand-300">
-                  Mawarid International Company For Recruitment
-                </p>
-              </div>
+            <div className="space-y-2">
+              <Image
+                src="/brand/logo-wide-white.svg"
+                alt="موارد الدولية"
+                width={200}
+                height={50}
+                className="h-11 w-auto"
+              />
+              <p className="text-xs text-brand-300">
+                Mawarid International Company For Recruitment
+              </p>
             </div>
             <p className="text-sm text-gray-300 leading-relaxed max-w-sm">
               شركة موارد الدولية للاستقدام — شريكك الموثوق في استقدام العمالة
@@ -114,7 +109,7 @@ export default function Footer() {
                 <li key={link.label}>
                   <a
                     href={link.href}
-                    className="text-sm text-gray-400 hover:text-white transition-colors duration-200 hover:translate-x-1 inline-block"
+                    className="text-sm text-gray-400 hover:text-white transition-colors duration-200 hover:translate-x-1 rtl:hover:-translate-x-1 inline-block"
                   >
                     {link.label}
                   </a>

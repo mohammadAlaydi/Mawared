@@ -58,23 +58,23 @@ export default function PricingSection() {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <section id="pricing" ref={ref} className="relative py-24 overflow-hidden">
+    <section id="pricing" ref={ref} className="relative py-16 sm:py-24 overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-white" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-brand-400/5 rounded-full blur-[200px]" />
+      <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] max-w-[90vw] bg-brand-300/5 rounded-full blur-[200px]" />
 
-      <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-8 lg:px-12">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-12 sm:mb-16"
         >
           <span className="inline-block text-sm font-semibold text-brand-600 bg-brand-50 rounded-full px-4 py-1.5 mb-4">
             باقات مرنة
           </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-brand-950 mb-4">
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-brand-950 mb-4">
             اختر <span className="gradient-text">الباقة المناسبة</span>
           </h2>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto leading-relaxed">
@@ -83,7 +83,7 @@ export default function PricingSection() {
         </motion.div>
 
         {/* Pricing Grid */}
-        <div className="grid md:grid-cols-3 gap-6 lg:gap-8 items-start">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 lg:gap-8 items-start">
           {packages.map((pkg, i) => (
             <motion.div
               key={pkg.name}
@@ -94,13 +94,13 @@ export default function PricingSection() {
             >
               {/* Popular Badge */}
               {pkg.popular && (
-                <div className="absolute -top-4 right-6 bg-gradient-to-l from-brand-500 to-brand-700 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg shadow-brand-500/30 z-10">
+                <div className="absolute -top-4 right-6 sm:right-8 bg-gradient-to-l from-brand-500 to-brand-700 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg shadow-brand-500/30 z-10">
                   الأكثر طلباً ⭐
                 </div>
               )}
 
               <div
-                className={`relative rounded-3xl p-8 border-2 transition-all duration-500 hover:-translate-y-2 ${
+                className={`relative rounded-3xl p-6 sm:p-8 border-2 transition-all duration-500 hover:-translate-y-2 ${
                   pkg.popular
                     ? "bg-white border-brand-500/30 shadow-xl shadow-brand-500/10"
                     : "bg-white border-gray-100 shadow-sm hover:shadow-xl hover:shadow-brand-500/10 hover:border-brand-200"
@@ -116,7 +116,7 @@ export default function PricingSection() {
 
                 {/* Price */}
                 <div className="flex items-baseline gap-2 mb-8">
-                  <span className="text-4xl font-black text-brand-900">
+                  <span className="font-manrope text-4xl font-black text-brand-900">
                     {pkg.price}
                   </span>
                   <div className="text-sm text-gray-500">
@@ -146,7 +146,7 @@ export default function PricingSection() {
                 {/* CTA */}
                 <a
                   href="#download"
-                  className={`block w-full py-3.5 rounded-2xl text-center font-bold text-sm transition-all duration-300 ${
+                  className={`flex min-h-[44px] w-full items-center justify-center rounded-2xl py-3.5 text-center font-bold text-sm transition-all duration-300 ${
                     pkg.popular
                       ? "bg-brand-600 hover:bg-brand-700 text-white shadow-lg shadow-brand-600/25 hover:shadow-brand-700/30"
                       : "bg-brand-50 hover:bg-brand-100 text-brand-700"

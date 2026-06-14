@@ -58,32 +58,32 @@ export default function HowItWorksSection() {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <section id="how-it-works" ref={ref} className="relative py-24 overflow-hidden">
+    <section id="how-it-works" ref={ref} className="relative py-16 sm:py-20 lg:py-24 overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-surface-100 to-white" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-brand-500/5 rounded-full blur-[150px]" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(600px,90vw)] h-[min(600px,90vw)] bg-brand-500/5 rounded-full blur-[150px]" />
 
-      <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-8 lg:px-12">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-12 sm:mb-16"
         >
-          <span className="inline-block text-sm font-semibold text-accent-600 bg-accent-50 rounded-full px-4 py-1.5 mb-4">
+          <span className="inline-block text-sm font-semibold text-accent-400 bg-accent-50 rounded-full px-4 py-1.5 mb-4">
             سهل وبسيط
           </span>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-brand-950 mb-4">
             كيف <span className="gradient-text">نعمل؟</span>
           </h2>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto leading-relaxed">
+          <p className="text-gray-600 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
             أربع خطوات بسيطة تفصلك عن الحصول على العامل المثالي
           </p>
         </motion.div>
 
         {/* Steps */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
           {steps.map((step, i) => (
             <motion.div
               key={step.number}
@@ -92,12 +92,12 @@ export default function HowItWorksSection() {
               transition={{ duration: 0.5, delay: i * 0.15 }}
               className="relative group"
             >
-              {/* Connector Line (hidden on mobile/last item) */}
+              {/* Connector Line — only between cards on the 4-up row (lg+). RTL: cards flow right-to-left, so the connector sits on the right (leading) edge, bridging toward the next card. */}
               {i < steps.length - 1 && (
-                <div className="hidden lg:block absolute top-16 -left-3 w-6 h-px bg-brand-200 group-hover:bg-brand-400 transition-colors duration-500" />
+                <div className="hidden lg:block absolute top-16 -right-3 w-6 h-px bg-brand-200 group-hover:bg-brand-400 transition-colors duration-500" />
               )}
 
-              <div className="relative bg-white rounded-3xl p-7 border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-brand-500/10 transition-all duration-500 hover:-translate-y-2 h-full">
+              <div className="relative bg-white rounded-3xl p-6 sm:p-7 border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-brand-500/10 transition-all duration-500 hover:-translate-y-2 h-full">
                 {/* Step Number */}
                 <div className="flex items-center justify-between mb-5">
                   <span className="text-4xl font-black text-brand-100 group-hover:text-brand-200 transition-colors duration-300">

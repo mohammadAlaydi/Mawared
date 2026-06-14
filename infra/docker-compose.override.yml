@@ -1,0 +1,10 @@
+# Local override: native Postgres already holds host port 5432, so expose the
+# Mawared Postgres container on 5433 instead. Redis/Mailhog ports are free.
+# Bring up with:
+#   docker compose -f infra/docker-compose.yml -f infra/docker-compose.override.yml up -d
+services:
+  postgres:
+    # !override replaces the base "5432:5432" mapping entirely so Docker does
+    # NOT also publish 5432 (which would shadow the host's native Postgres).
+    ports: !override
+      - "5433:5432"

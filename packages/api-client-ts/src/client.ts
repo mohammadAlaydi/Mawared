@@ -7,6 +7,7 @@ import type {
   AdminRefundsReport,
   AdminRevenueReport,
   AdminCustomerDetail,
+  AdminNotificationsResponse,
   AdminOverviewResponse,
   AdminPaymentIntent,
   AdminRefund,
@@ -341,6 +342,11 @@ export class MawaredClient {
         }),
       deactivate: (id: string) =>
         this.req<void>('POST', `/v1/admin/staff/${id}/deactivate`),
+    },
+    notifications: {
+      /** Real-time admin activity feed (leads, orders, customers, verifications). */
+      list: () =>
+        this.req<AdminNotificationsResponse>('GET', '/v1/admin/notifications'),
     },
     reports: {
       revenue: (from: string, to: string, branchId?: string) =>

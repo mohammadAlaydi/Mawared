@@ -53,16 +53,14 @@ npm-debug.log*
 yarn-debug.log*
 pnpm-debug.log*
 
-# ======= Environment =======
-.env
-.env.local
-.env.production
-.env.development
-!.env.example
-
 # ======= Prisma generated =======
 apps/backend/prisma/generated/
 
 # ======= Misc =======
 *.pdf
 .cache/
+drive_dl/
+.drive-assets/
+.env
+.env.local
+.claude/launch.json

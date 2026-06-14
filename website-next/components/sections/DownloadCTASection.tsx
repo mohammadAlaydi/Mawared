@@ -9,7 +9,7 @@ export default function DownloadCTASection() {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <section id="download" ref={ref} className="relative py-24 overflow-hidden">
+    <section id="download" ref={ref} className="relative py-16 sm:py-24 overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-brand-700 via-brand-800 to-brand-950" />
       <div className="absolute inset-0 noise-overlay" />
@@ -23,8 +23,8 @@ export default function DownloadCTASection() {
       <div className="absolute bottom-32 right-[25%] w-6 h-6 rounded-lg bg-white/5 rotate-45 animate-float" style={{ animationDelay: "2s" }} />
       <div className="absolute top-1/2 left-[70%] w-3 h-3 rounded-full bg-accent-400/20 animate-float" style={{ animationDelay: "4s" }} />
 
-      <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-8 lg:px-12">
+        <div className="grid lg:grid-cols-2 gap-10 sm:gap-12 items-center">
           {/* Text */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -84,7 +84,7 @@ export default function DownloadCTASection() {
                 <span className="text-sm">آمن وموثوق</span>
               </div>
               <div className="flex items-center gap-2 text-gray-300">
-                <svg className="w-5 h-5 text-amber-400" viewBox="0 0 24 24" fill="currentColor">
+                <svg className="w-5 h-5 text-accent-400" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                 </svg>
                 <span className="text-sm">تقييم 4.9</span>
@@ -100,42 +100,26 @@ export default function DownloadCTASection() {
             </div>
           </motion.div>
 
-          {/* Phone Mockup */}
+          {/* CTA Banner Visual */}
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.8, delay: 0.3 }}
             className="relative flex justify-center"
           >
-            <div className="relative w-[280px] h-[560px]">
-              {/* Phone Frame */}
-              <div className="absolute inset-0 bg-gradient-to-b from-gray-800 to-gray-900 rounded-[3rem] shadow-2xl shadow-black/50 p-3">
-                {/* Notch */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-7 bg-gray-900 rounded-b-2xl z-10" />
-                {/* Screen */}
-                <div className="w-full h-full rounded-[2.4rem] overflow-hidden bg-brand-600 relative">
+            <div className="relative w-full max-w-md lg:max-w-none">
+              {/* Brand frame */}
+              <div className="relative rounded-3xl p-1 bg-gradient-to-br from-brand-300 via-brand-500 to-accent-400 shadow-2xl shadow-black/40">
+                <div className="relative rounded-[1.35rem] overflow-hidden">
                   <Image
-                    src="/images/logo-icon.png"
-                    alt="تطبيق موارد الدولية"
-                    fill
-                    className="object-cover"
+                    src="/images/cta/cta-banner.png"
+                    alt="حمّل تطبيق موارد الدولية"
+                    width={640}
+                    height={520}
+                    sizes="(max-width: 1024px) 92vw, 50vw"
+                    className="object-cover w-full h-auto"
                   />
-                  {/* Overlay with app branding */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-brand-900/80 via-transparent to-brand-800/30 flex flex-col justify-end p-6">
-                    <div className="text-center space-y-2">
-                      <div className="w-16 h-16 mx-auto rounded-2xl overflow-hidden bg-white/20 backdrop-blur-sm shadow-lg mb-3">
-                        <Image
-                          src="/images/logo-full.png"
-                          alt="موارد"
-                          width={64}
-                          height={64}
-                          className="object-contain"
-                        />
-                      </div>
-                      <p className="text-white font-bold text-lg">موارد الدولية</p>
-                      <p className="text-white/70 text-xs">أختر عاملتك بنفسك</p>
-                    </div>
-                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-brand-950/30 via-transparent to-transparent" />
                 </div>
               </div>
 

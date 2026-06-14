@@ -54,7 +54,7 @@ function StarRating({ rating }: { rating: number }) {
       {[1, 2, 3, 4, 5].map((star) => (
         <svg
           key={star}
-          className={`w-4 h-4 ${star <= rating ? "text-amber-400" : "text-gray-200"}`}
+          className={`w-4 h-4 ${star <= rating ? "text-accent-400" : "text-gray-200"}`}
           viewBox="0 0 24 24"
           fill="currentColor"
         >
@@ -70,24 +70,24 @@ export default function TestimonialsSection() {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <section id="testimonials" ref={ref} className="relative py-24 overflow-hidden">
+    <section id="testimonials" ref={ref} className="relative py-16 sm:py-24 overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-surface-100" />
-      <div className="absolute top-0 right-0 w-96 h-96 bg-brand-400/5 rounded-full blur-[150px]" />
-      <div className="absolute bottom-0 left-0 w-80 h-80 bg-accent-400/5 rounded-full blur-[120px]" />
+      <div className="pointer-events-none absolute top-0 right-0 w-96 h-96 max-w-[80vw] bg-brand-300/5 rounded-full blur-[150px]" />
+      <div className="pointer-events-none absolute bottom-0 left-0 w-80 h-80 max-w-[80vw] bg-accent-400/5 rounded-full blur-[120px]" />
 
-      <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-8 lg:px-12">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-12 sm:mb-16"
         >
           <span className="inline-block text-sm font-semibold text-accent-600 bg-accent-50 rounded-full px-4 py-1.5 mb-4">
             ثقة عملائنا
           </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-brand-950 mb-4">
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-brand-950 mb-4">
             ماذا يقول <span className="gradient-text">عملاؤنا</span>
           </h2>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto leading-relaxed">
@@ -96,7 +96,7 @@ export default function TestimonialsSection() {
         </motion.div>
 
         {/* Testimonials Grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
           {testimonials.map((testimonial, i) => (
             <motion.div
               key={testimonial.name}
@@ -105,7 +105,7 @@ export default function TestimonialsSection() {
               transition={{ duration: 0.5, delay: i * 0.1 }}
               className="group"
             >
-              <div className="relative bg-white rounded-3xl p-7 border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-brand-500/10 transition-all duration-500 hover:-translate-y-1 h-full flex flex-col">
+              <div className="relative bg-white rounded-3xl p-6 sm:p-7 border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-brand-500/10 transition-all duration-500 hover:-translate-y-1 h-full flex flex-col">
                 {/* Quote Icon */}
                 <div className="absolute top-5 left-5 text-brand-100 group-hover:text-brand-200 transition-colors">
                   <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
@@ -125,7 +125,7 @@ export default function TestimonialsSection() {
 
                 {/* Author */}
                 <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-300 to-brand-500 flex items-center justify-center text-white font-bold text-sm shadow-md">
                     {testimonial.initial}
                   </div>
                   <div>

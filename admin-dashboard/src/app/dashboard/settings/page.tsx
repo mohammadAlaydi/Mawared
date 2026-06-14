@@ -17,8 +17,8 @@ export default function SettingsPage() {
   const [maintenance, setMaintenance] = useState(false);
 
   const Toggle = ({ value, onChange, danger }: { value: boolean; onChange: (v: boolean) => void; danger?: boolean }) => (
-    <button onClick={() => { onChange(!value); toast.success('تم حفظ الإعدادات'); }} className={`relative w-11 h-6 rounded-full transition-colors ${value ? (danger ? 'bg-red-500' : 'bg-[#0B5E50]') : 'bg-gray-300'}`}>
-      <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${value ? 'left-0.5' : 'left-5'}`} />
+    <button onClick={() => { onChange(!value); toast.success('تم حفظ الإعدادات'); }} className={`relative w-11 h-6 rounded-full transition-colors ${value ? (danger ? 'bg-red-500' : 'bg-[#2D5BE4]') : 'bg-gray-300'}`}>
+      <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${value ? 'start-0.5' : 'start-5'}`} />
     </button>
   );
 
@@ -30,7 +30,7 @@ export default function SettingsPage() {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
         <h3 className="font-bold text-gray-900 mb-4">الأدوار والصلاحيات</h3>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[420px] text-sm">
             <thead><tr className="bg-gray-50"><th className="text-right px-4 py-3 font-semibold text-gray-600">الدور</th><th className="text-right px-4 py-3 font-semibold text-gray-600">الصلاحيات</th></tr></thead>
             <tbody>{roles.map(r => (
               <tr key={r.name} className="border-t border-gray-50"><td className="px-4 py-3 font-bold">{r.name}</td><td className="px-4 py-3 text-gray-600">{r.permissions}</td></tr>
@@ -43,9 +43,9 @@ export default function SettingsPage() {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
         <h3 className="font-bold text-gray-900 mb-4">إعدادات التطبيق</h3>
         <div className="space-y-4">
-          <div className="flex items-center justify-between py-2"><div><p className="font-medium text-gray-900">تفعيل الإشعارات للطلبات الجديدة</p><p className="text-xs text-gray-400">إرسال إشعار عند استلام طلب جديد</p></div><Toggle value={notif} onChange={setNotif} /></div>
-          <div className="flex items-center justify-between py-2 border-t border-gray-100"><div><p className="font-medium text-gray-900">تفعيل الدفع الإلكتروني</p><p className="text-xs text-gray-400">السماح بالدفع عبر مدى وفيزا</p></div><Toggle value={payment} onChange={setPayment} /></div>
-          <div className="flex items-center justify-between py-2 border-t border-gray-100"><div><p className="font-medium text-red-600">وضع الصيانة</p><p className="text-xs text-gray-400">تعطيل الوصول للمستخدمين مؤقتاً</p></div><Toggle value={maintenance} onChange={setMaintenance} danger /></div>
+          <div className="flex items-center justify-between gap-3 py-2"><div className="min-w-0"><p className="font-medium text-gray-900">تفعيل الإشعارات للطلبات الجديدة</p><p className="text-xs text-gray-400">إرسال إشعار عند استلام طلب جديد</p></div><div className="shrink-0"><Toggle value={notif} onChange={setNotif} /></div></div>
+          <div className="flex items-center justify-between gap-3 py-2 border-t border-gray-100"><div className="min-w-0"><p className="font-medium text-gray-900">تفعيل الدفع الإلكتروني</p><p className="text-xs text-gray-400">السماح بالدفع عبر مدى وفيزا</p></div><div className="shrink-0"><Toggle value={payment} onChange={setPayment} /></div></div>
+          <div className="flex items-center justify-between gap-3 py-2 border-t border-gray-100"><div className="min-w-0"><p className="font-medium text-red-600">وضع الصيانة</p><p className="text-xs text-gray-400">تعطيل الوصول للمستخدمين مؤقتاً</p></div><div className="shrink-0"><Toggle value={maintenance} onChange={setMaintenance} danger /></div></div>
         </div>
       </div>
 

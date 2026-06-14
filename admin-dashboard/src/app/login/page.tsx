@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ApiError } from '@mawared/api-client';
 import { useAuth } from '@/lib/auth';
@@ -61,18 +62,26 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
-      {/* Brand Side */}
-      <div className="lg:w-1/2 bg-gradient-to-br from-[#073D34] via-[#0B5E50] to-[#1A7A69] text-white p-8 lg:p-16 flex flex-col justify-center relative overflow-hidden">
+      {/* Brand Side — full editorial panel on lg+, condensed banner on mobile */}
+      <div className="lg:w-1/2 bg-gradient-to-br from-[#0F234C] via-[#2D5BE4] to-[#6599FE] text-white px-6 py-8 sm:p-8 lg:p-16 flex flex-col justify-center relative overflow-hidden">
         <div className="absolute top-0 left-0 w-72 h-72 bg-white/5 rounded-full blur-[100px]" />
-        <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#C9A84C]/10 rounded-full blur-[120px]" />
-        <div className="relative z-10 max-w-md mx-auto lg:mx-0">
-          <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center text-3xl font-black mb-6 border border-white/20">م</div>
-          <h1 className="text-3xl lg:text-4xl font-black mb-3">موارد الدولية</h1>
-          <p className="text-white/60 text-lg mb-10">لوحة تحكم إدارة العمليات</p>
-          <div className="space-y-4">
-            {bullets.map((b, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center"><b.icon size={20} /></div>
+        <div className="absolute bottom-0 right-0 w-96 h-96 max-w-full bg-[#ECA423]/10 rounded-full blur-[120px]" />
+        <div className="relative z-10 w-full max-w-md mx-auto lg:mx-0">
+          <Image
+            src="/brand/logo-wide-white.svg"
+            alt="موارد الدولية"
+            width={200}
+            height={48}
+            priority
+            className="h-9 sm:h-10 lg:h-12 w-auto mb-6"
+          />
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-2 sm:mb-3">موارد الدولية</h1>
+          <p className="text-white/60 text-base sm:text-lg mb-0 lg:mb-10">لوحة تحكم إدارة العمليات</p>
+          {/* Feature bullets are editorial detail — keep them off small screens */}
+          <div className="hidden lg:block space-y-4">
+            {bullets.map((b) => (
+              <div key={b.text} className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0"><b.icon size={20} /></div>
                 <span className="text-white/80">{b.text}</span>
               </div>
             ))}
@@ -81,8 +90,16 @@ export default function LoginPage() {
       </div>
 
       {/* Form Side */}
-      <div className="lg:w-1/2 bg-white p-8 lg:p-16 flex items-center justify-center">
+      <div className="lg:w-1/2 bg-white px-6 py-10 sm:p-8 lg:p-16 flex items-center justify-center">
         <div className={`w-full max-w-md ${shake ? 'animate-shake' : ''}`}>
+          <Image
+            src="/brand/logo-wide.svg"
+            alt="موارد الدولية"
+            width={200}
+            height={48}
+            priority
+            className="h-9 sm:h-10 w-auto mb-8"
+          />
           <h2 className="text-2xl font-black text-gray-900 mb-1">مرحباً بعودتك</h2>
           <p className="text-gray-500 mb-8">لوحة تحكم موارد الدولية</p>
 
@@ -101,7 +118,7 @@ export default function LoginPage() {
                 placeholder="admin@mawared.sa"
                 dir="ltr"
                 disabled={loginPending}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#0B5E50]/30 focus:border-[#0B5E50] transition-all text-left disabled:opacity-60"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#2D5BE4]/30 focus:border-[#2D5BE4] transition-all text-left disabled:opacity-60"
                 required
               />
             </div>
@@ -120,13 +137,13 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   disabled={loginPending}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#0B5E50]/30 focus:border-[#0B5E50] transition-all pl-12 disabled:opacity-60"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#2D5BE4]/30 focus:border-[#2D5BE4] transition-all pe-12 disabled:opacity-60"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute end-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   aria-label={showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'}
                   tabIndex={-1}
                 >
@@ -154,7 +171,7 @@ export default function LoginPage() {
                   dir="ltr"
                   disabled={loginPending}
                   autoFocus
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#0B5E50]/30 focus:border-[#0B5E50] transition-all text-left tracking-widest text-lg disabled:opacity-60"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#2D5BE4]/30 focus:border-[#2D5BE4] transition-all text-left tracking-widest text-lg disabled:opacity-60"
                   required
                 />
                 <p className="text-xs text-gray-500 mt-2">
@@ -176,7 +193,7 @@ export default function LoginPage() {
               type="submit"
               disabled={loginPending}
               aria-busy={loginPending}
-              className="w-full py-3.5 rounded-xl bg-[#0B5E50] hover:bg-[#073D34] text-white font-bold text-base shadow-lg shadow-[#0B5E50]/25 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-3.5 rounded-xl bg-[#2D5BE4] hover:bg-[#0F234C] text-white font-bold text-base shadow-lg shadow-[#2D5BE4]/25 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loginPending ? (
                 <>

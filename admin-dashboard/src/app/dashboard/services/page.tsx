@@ -59,7 +59,7 @@ export default function ServicesPage() {
         actions={
           <button
             onClick={() => setShowAdd(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-[#0B5E50] text-white rounded-xl text-sm font-semibold hover:bg-[#073D34]"
+            className="flex items-center gap-2 px-4 py-2 bg-[#2D5BE4] text-white rounded-xl text-sm font-semibold hover:bg-[#0F234C]"
           >
             <Plus size={16} />
             إضافة خدمة
@@ -111,7 +111,7 @@ export default function ServicesPage() {
           >
             <div className="flex items-start justify-between mb-4">
               <div className="flex flex-col gap-2">
-                <span className="inline-block w-fit px-2 py-0.5 rounded-lg text-[11px] font-medium bg-[#0B5E50]/10 text-[#0B5E50]">
+                <span className="inline-block w-fit px-2 py-0.5 rounded-lg text-[11px] font-medium bg-[#2D5BE4]/10 text-[#2D5BE4]">
                   {PROFESSION_LABELS[s.profession]}
                 </span>
                 <span className="text-[11px] text-gray-400 font-mono">{s.slug}</span>
@@ -339,7 +339,7 @@ function ServiceFormModal({
             rows={2}
             className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm resize-none"
           />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <select
               value={form.profession}
               onChange={(e) => setForm({ ...form, profession: e.target.value as Profession })}
@@ -374,7 +374,7 @@ function ServiceFormModal({
           <button
             onClick={handleSave}
             disabled={mutation.isPending}
-            className="flex-1 py-2.5 bg-[#0B5E50] text-white rounded-xl font-semibold disabled:opacity-60"
+            className="flex-1 py-2.5 bg-[#2D5BE4] text-white rounded-xl font-semibold disabled:opacity-60"
           >
             {mutation.isPending ? 'جاري الحفظ...' : 'حفظ'}
           </button>

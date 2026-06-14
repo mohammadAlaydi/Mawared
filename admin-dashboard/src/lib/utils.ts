@@ -39,3 +39,24 @@ export function shortOrderRef(orderNumber: string | null | undefined, id: string
   if (orderNumber) return orderNumber;
   return `#${id.slice(-6).toUpperCase()}`;
 }
+
+/**
+ * Compact Arabic relative-time label ("منذ 5 د", "منذ ساعتين", "أمس"…).
+ * Falls back to an absolute date for anything older than ~a week.
+ */
+export function formatRelativeTime(dateStr: string | null | undefined): string {
+  if (!dateStr) return '';
+  const then = new Date(dateStr);
+  if (Number.isNaN(then.getTime())) return '';
+  const diffMs = Date.now() - then.getTime();
+  const sec = Math.round(diffMs / 1000);
+  if (sec < 60) return 'الآن';
+  const min = Math.round(sec / 60);
+  if (min < 60) return `منذ ${min} د`;
+  const hr = Math.round(min / 60);
+  if (hr < 24) return `منذ ${hr} س`;
+  const day = Math.round(hr / 24);
+  if (day === 1) return 'أمس';
+  if (day < 7) return `منذ ${day} أيام`;
+  return formatDate(dateStr);
+}

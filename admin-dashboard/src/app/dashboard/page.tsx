@@ -16,6 +16,7 @@ import {
   YAxis,
 } from 'recharts';
 import {
+  ChevronLeft,
   ClipboardList,
   DollarSign,
   Globe,
@@ -161,8 +162,8 @@ export default function DashboardPage() {
           change="تشمل كل الحالات"
           changeType="neutral"
           icon={ClipboardList}
-          iconColor="text-green-600"
-          iconBg="bg-green-100"
+          iconColor="text-green-500"
+          iconBg="bg-green-500/10"
           borderColor="border-r-green-500"
         />
         <KpiCard
@@ -195,14 +196,14 @@ export default function DashboardPage() {
           change={workers ? `من أصل ${workers.total}` : ''}
           changeType="neutral"
           icon={Users}
-          iconColor="text-teal-600"
-          iconBg="bg-teal-100"
-          borderColor="border-r-teal-500"
+          iconColor="text-brand-500"
+          iconBg="bg-brand-300/10"
+          borderColor="border-r-brand-500"
         />
       </div>
 
       {/* Charts Row */}
-      <div className="grid lg:grid-cols-5 gap-4">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Revenue Area Chart */}
         <div className="lg:col-span-3 bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
           <h3 className="font-bold text-gray-900 mb-4">إيرادات آخر 30 يوم</h3>
@@ -217,27 +218,27 @@ export default function DashboardPage() {
               <AreaChart data={revenueSeries}>
                 <defs>
                   <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0B5E50" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#0B5E50" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#2D5BE4" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="#2D5BE4" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                <XAxis dataKey="label" tick={{ fontFamily: 'Cairo', fontSize: 11 }} />
+                <XAxis dataKey="label" tick={{ fontFamily: 'Alexandria', fontSize: 11 }} />
                 <YAxis
-                  tick={{ fontFamily: 'Cairo', fontSize: 11 }}
+                  tick={{ fontFamily: 'Alexandria', fontSize: 11 }}
                   tickFormatter={(v) => `${Math.round(v / 100).toLocaleString('ar-SA')} ر.س`}
                 />
                 <Tooltip
-                  contentStyle={{ fontFamily: 'Cairo', borderRadius: '8px' }}
+                  contentStyle={{ fontFamily: 'Alexandria', borderRadius: '8px' }}
                   formatter={(v: number) => [formatMoneyMinor(String(v), 'SAR'), 'إيرادات']}
                 />
                 <Area
                   type="monotone"
                   dataKey="minor"
                   fill="url(#revGrad)"
-                  stroke="#0B5E50"
+                  stroke="#2D5BE4"
                   strokeWidth={2.5}
-                  dot={{ fill: '#0B5E50', r: 3 }}
+                  dot={{ fill: '#2D5BE4', r: 3 }}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -272,12 +273,12 @@ export default function DashboardPage() {
                     ))}
                   </Pie>
                   <Tooltip
-                    contentStyle={{ fontFamily: 'Cairo' }}
+                    contentStyle={{ fontFamily: 'Alexandria' }}
                     formatter={(v: number) => [`${v} طلب`]}
                   />
                 </PieChart>
               </ResponsiveContainer>
-              <div className="grid grid-cols-2 gap-2 mt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
                 {statusSlices.map((s) => (
                   <div key={s.status} className="flex items-center gap-2">
                     <div
@@ -301,20 +302,21 @@ export default function DashboardPage() {
           <h3 className="font-bold text-gray-900">أحدث الطلبات</h3>
           <Link
             href="/dashboard/orders"
-            className="text-sm font-medium text-[#0B5E50] hover:underline"
+            className="inline-flex items-center gap-1 text-sm font-medium text-[#2D5BE4] hover:underline"
           >
-            عرض الكل ←
+            عرض الكل
+            <ChevronLeft size={14} />
           </Link>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm min-w-[640px]">
             <thead>
               <tr className="bg-gray-50">
                 <th className="text-right px-5 py-3 font-semibold text-gray-600">رقم الطلب</th>
                 <th className="text-right px-5 py-3 font-semibold text-gray-600">العميل</th>
                 <th className="text-right px-5 py-3 font-semibold text-gray-600">المبلغ</th>
                 <th className="text-right px-5 py-3 font-semibold text-gray-600">الحالة</th>
-                <th className="text-right px-5 py-3 font-semibold text-gray-600">التاريخ</th>
+                <th className="text-right px-5 py-3 font-semibold text-gray-600 hidden md:table-cell">التاريخ</th>
               </tr>
             </thead>
             <tbody>
@@ -334,7 +336,7 @@ export default function DashboardPage() {
                     key={o.id}
                     className="border-t border-gray-50 hover:bg-gray-50/50 transition-colors"
                   >
-                    <td className="px-5 py-3 font-semibold text-[#0B5E50]">
+                    <td className="px-5 py-3 font-semibold text-[#2D5BE4]">
                       {shortOrderRef(null, o.id)}
                     </td>
                     <td className="px-5 py-3">
@@ -349,7 +351,7 @@ export default function DashboardPage() {
                     <td className="px-5 py-3">
                       <OrderStatusBadge status={o.status} />
                     </td>
-                    <td className="px-5 py-3 text-gray-500">{formatDate(o.createdAt)}</td>
+                    <td className="px-5 py-3 text-gray-500 hidden md:table-cell">{formatDate(o.createdAt)}</td>
                   </tr>
                 ))}
               {!isLoading && (overview?.recentOrders.length ?? 0) === 0 && (
@@ -367,8 +369,8 @@ export default function DashboardPage() {
       {/* Quick Stats */}
       <div className="grid sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
-            <Globe size={22} className="text-purple-600" />
+          <div className="w-12 h-12 rounded-xl bg-brand-300/10 flex items-center justify-center">
+            <Globe size={22} className="text-brand-500" />
           </div>
           <div>
             <p className="text-xs text-gray-500">أكثر جنسية</p>
@@ -380,8 +382,8 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
-            <Star size={22} className="text-amber-600" />
+          <div className="w-12 h-12 rounded-xl bg-accent-400/10 flex items-center justify-center">
+            <Star size={22} className="text-accent-400" />
           </div>
           <div>
             <p className="text-xs text-gray-500">عمال محجوزون</p>
@@ -391,8 +393,8 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-cyan-100 flex items-center justify-center">
-            <Users size={22} className="text-cyan-600" />
+          <div className="w-12 h-12 rounded-xl bg-brand-300/10 flex items-center justify-center">
+            <Users size={22} className="text-brand-500" />
           </div>
           <div>
             <p className="text-xs text-gray-500">إجمالي الأسطول</p>

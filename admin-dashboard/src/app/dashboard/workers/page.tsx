@@ -105,7 +105,7 @@ export default function WorkersPage() {
         actions={
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-[#0B5E50] text-white rounded-xl text-sm font-semibold hover:bg-[#073D34]"
+            className="flex items-center gap-2 px-4 py-2 bg-[#2D5BE4] text-white rounded-xl text-sm font-semibold hover:bg-[#0F234C]"
           >
             <Plus size={16} />
             إضافة عامل جديد
@@ -114,20 +114,20 @@ export default function WorkersPage() {
       />
 
       {/* Filters */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-4 flex flex-wrap gap-3 items-center">
-        <div className="relative flex-1 min-w-[200px]">
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-4 flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:items-center">
+        <div className="relative w-full sm:flex-1 sm:min-w-[200px]">
           <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="بحث بالاسم..."
-            className="w-full pr-9 pl-4 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B5E50]/20"
+            className="w-full pr-9 pl-4 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-[#2D5BE4]/20"
           />
         </div>
         <select
           value={natFilter}
           onChange={(e) => setNatFilter(e.target.value)}
-          className="px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm"
+          className="w-full sm:w-auto px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm"
         >
           <option value="all">جميع الجنسيات</option>
           {nationalityOptions.map((n) => (
@@ -139,7 +139,7 @@ export default function WorkersPage() {
         <select
           value={profFilter}
           onChange={(e) => setProfFilter(e.target.value as typeof profFilter)}
-          className="px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm"
+          className="w-full sm:w-auto px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm"
         >
           <option value="all">جميع المهن</option>
           {PROFESSIONS.map((p) => (
@@ -151,7 +151,7 @@ export default function WorkersPage() {
         <select
           value={availFilter}
           onChange={(e) => setAvailFilter(e.target.value as typeof availFilter)}
-          className="px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm"
+          className="w-full sm:w-auto px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm"
         >
           <option value="all">جميع الحالات</option>
           {AVAILABILITIES.map((a) => (
@@ -162,7 +162,7 @@ export default function WorkersPage() {
         </select>
         {query.isFetching && (
           <span className="text-xs text-gray-400 mr-auto inline-flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#0B5E50] animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-[#2D5BE4] animate-pulse" />
             تحديث...
           </span>
         )}
@@ -189,19 +189,19 @@ export default function WorkersPage() {
       )}
 
       {/* Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm min-w-[820px]">
             <thead>
               <tr className="bg-gray-50">
                 <th className="text-right px-4 py-3 font-semibold text-gray-600">الاسم</th>
-                <th className="text-right px-4 py-3 font-semibold text-gray-600">الجنسية</th>
+                <th className="text-right px-4 py-3 font-semibold text-gray-600 hidden sm:table-cell">الجنسية</th>
                 <th className="text-right px-4 py-3 font-semibold text-gray-600">المهنة</th>
-                <th className="text-right px-4 py-3 font-semibold text-gray-600">العمر</th>
-                <th className="text-right px-4 py-3 font-semibold text-gray-600">الخبرة</th>
+                <th className="text-right px-4 py-3 font-semibold text-gray-600 hidden lg:table-cell">العمر</th>
+                <th className="text-right px-4 py-3 font-semibold text-gray-600 hidden lg:table-cell">الخبرة</th>
                 <th className="text-right px-4 py-3 font-semibold text-gray-600">الراتب</th>
                 <th className="text-right px-4 py-3 font-semibold text-gray-600">الحالة</th>
-                <th className="text-right px-4 py-3 font-semibold text-gray-600">التقييم</th>
+                <th className="text-right px-4 py-3 font-semibold text-gray-600 hidden md:table-cell">التقييم</th>
                 <th className="text-right px-4 py-3 font-semibold text-gray-600">إجراءات</th>
               </tr>
             </thead>
@@ -214,12 +214,12 @@ export default function WorkersPage() {
                     <td className="px-4 py-3">
                       <button
                         onClick={() => router.push(`/dashboard/workers/${w.id}`)}
-                        className="font-semibold text-[#0B5E50] hover:underline flex items-center gap-1.5"
+                        className="font-semibold text-[#2D5BE4] hover:underline flex items-center gap-1.5"
                       >
                         {w.nationality?.flagEmoji} {w.fullNameAr}
                       </button>
                     </td>
-                    <td className="px-4 py-3">{w.nationality?.nameAr ?? '—'}</td>
+                    <td className="px-4 py-3 hidden sm:table-cell">{w.nationality?.nameAr ?? '—'}</td>
                     <td className="px-4 py-3">
                       <span
                         className={`px-2 py-0.5 rounded-lg text-[11px] font-medium border ${PROFESSION_COLORS[w.profession]}`}
@@ -227,8 +227,8 @@ export default function WorkersPage() {
                         {PROFESSION_LABELS[w.profession]}
                       </span>
                     </td>
-                    <td className="px-4 py-3">{w.ageYears}</td>
-                    <td className="px-4 py-3">{w.experienceYears} سنوات</td>
+                    <td className="px-4 py-3 hidden lg:table-cell">{w.ageYears}</td>
+                    <td className="px-4 py-3 hidden lg:table-cell">{w.experienceYears} سنوات</td>
                     <td className="px-4 py-3 font-bold">
                       {formatMoneyMinor(w.monthlySalaryMinor, w.currency)}
                     </td>
@@ -239,14 +239,14 @@ export default function WorkersPage() {
                         {AVAILABILITY_LABELS[w.availability]}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-500">
+                    <td className="px-4 py-3 text-gray-500 hidden md:table-cell">
                       {Number(w.rating).toFixed(1)} ({w.reviewCount})
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1">
                         <button
                           onClick={() => router.push(`/dashboard/workers/${w.id}`)}
-                          className="p-1.5 rounded-lg hover:bg-[#0B5E50]/10 text-[#0B5E50]"
+                          className="p-1.5 rounded-lg hover:bg-[#2D5BE4]/10 text-[#2D5BE4]"
                           title="عرض الملف"
                         >
                           <Eye size={14} />
@@ -407,7 +407,7 @@ function EditWorkerModal({ worker, onClose }: { worker: Worker; onClose: () => v
       >
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-bold">تعديل العامل</h3>
-          <button onClick={onClose}>
+          <button onClick={onClose} aria-label="إغلاق" className="p-1 rounded-lg hover:bg-gray-100">
             <X size={20} />
           </button>
         </div>
@@ -508,7 +508,7 @@ function EditWorkerModal({ worker, onClose }: { worker: Worker; onClose: () => v
           <button
             onClick={handleSave}
             disabled={updateMutation.isPending}
-            className="flex-1 py-2.5 bg-[#0B5E50] text-white rounded-xl font-semibold hover:bg-[#073D34] transition-colors disabled:opacity-60"
+            className="flex-1 py-2.5 bg-[#2D5BE4] text-white rounded-xl font-semibold hover:bg-[#0F234C] transition-colors disabled:opacity-60"
           >
             {updateMutation.isPending ? 'جاري الحفظ...' : 'حفظ'}
           </button>
@@ -610,14 +610,14 @@ function CreateWorkerModal({ onClose }: { onClose: () => void }) {
       >
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-bold">إضافة عامل جديد</h3>
-          <button onClick={onClose}>
+          <button onClick={onClose} aria-label="إغلاق" className="p-1 rounded-lg hover:bg-gray-100">
             <X size={20} />
           </button>
         </div>
 
         {refDataLoading && (
           <div className="py-8 flex justify-center">
-            <div className="w-6 h-6 rounded-full border-2 border-gray-200 border-t-[#0B5E50] animate-spin" />
+            <div className="w-6 h-6 rounded-full border-2 border-gray-200 border-t-[#2D5BE4] animate-spin" />
           </div>
         )}
 
@@ -766,7 +766,7 @@ function CreateWorkerModal({ onClose }: { onClose: () => void }) {
           <button
             onClick={handleSave}
             disabled={createMutation.isPending || refDataLoading}
-            className="flex-1 py-2.5 bg-[#0B5E50] text-white rounded-xl font-semibold hover:bg-[#073D34] transition-colors disabled:opacity-60"
+            className="flex-1 py-2.5 bg-[#2D5BE4] text-white rounded-xl font-semibold hover:bg-[#0F234C] transition-colors disabled:opacity-60"
           >
             {createMutation.isPending ? 'جاري الإضافة...' : 'إضافة'}
           </button>

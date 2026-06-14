@@ -20,7 +20,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-surface flex items-center justify-center">
-      <div className="w-12 h-12 rounded-full border-2 border-gray-200 border-t-[#0B5E50] animate-spin" />
+      <div className="w-12 h-12 rounded-full border-2 border-gray-200 border-t-[#2D5BE4] animate-spin" />
     </div>
   );
 }

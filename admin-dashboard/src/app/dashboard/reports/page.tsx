@@ -121,16 +121,16 @@ export default function ReportsPage() {
           type="date"
           value={from}
           onChange={(e) => setFrom(e.target.value)}
-          className="px-3 py-1.5 rounded-xl border border-gray-200 bg-gray-50"
+          className="min-w-0 flex-1 sm:flex-none px-3 py-1.5 rounded-xl border border-gray-200 bg-gray-50"
         />
         <label className="text-gray-500">إلى</label>
         <input
           type="date"
           value={to}
           onChange={(e) => setTo(e.target.value)}
-          className="px-3 py-1.5 rounded-xl border border-gray-200 bg-gray-50"
+          className="min-w-0 flex-1 sm:flex-none px-3 py-1.5 rounded-xl border border-gray-200 bg-gray-50"
         />
-        <div className="flex gap-1.5">
+        <div className="flex flex-wrap gap-1.5 w-full sm:w-auto">
           {PRESETS.map((p) => (
             <button
               key={p.label}
@@ -194,22 +194,22 @@ export default function ReportsPage() {
               <AreaChart data={revenueByDay}>
                 <defs>
                   <linearGradient id="grossGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#C9A84C" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#C9A84C" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#ECA423" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#ECA423" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="netGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0B5E50" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#0B5E50" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#2D5BE4" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#2D5BE4" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                <XAxis dataKey="label" tick={{ fontFamily: 'Cairo', fontSize: 11 }} />
+                <XAxis dataKey="label" tick={{ fontFamily: 'Alexandria', fontSize: 11 }} />
                 <YAxis
-                  tick={{ fontFamily: 'Cairo', fontSize: 11 }}
+                  tick={{ fontFamily: 'Alexandria', fontSize: 11 }}
                   tickFormatter={(v) => `${Math.round(v / 100).toLocaleString('ar-SA')}`}
                 />
                 <Tooltip
-                  contentStyle={{ fontFamily: 'Cairo', borderRadius: 8 }}
+                  contentStyle={{ fontFamily: 'Alexandria', borderRadius: 8 }}
                   formatter={(v: number, name) => [
                     formatMoneyMinor(String(v), 'SAR'),
                     name === 'gross' ? 'إجمالي' : 'صافي',
@@ -219,14 +219,14 @@ export default function ReportsPage() {
                   type="monotone"
                   dataKey="gross"
                   fill="url(#grossGrad)"
-                  stroke="#C9A84C"
+                  stroke="#ECA423"
                   strokeWidth={2}
                 />
                 <Area
                   type="monotone"
                   dataKey="net"
                   fill="url(#netGrad)"
-                  stroke="#0B5E50"
+                  stroke="#2D5BE4"
                   strokeWidth={2}
                 />
               </AreaChart>
@@ -260,7 +260,7 @@ export default function ReportsPage() {
                     <Cell key={i} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={{ fontFamily: 'Cairo' }} />
+                <Tooltip contentStyle={{ fontFamily: 'Alexandria' }} />
               </PieChart>
             </ResponsiveContainer>
           )}
@@ -278,15 +278,15 @@ export default function ReportsPage() {
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={nationalityData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                <XAxis type="number" tick={{ fontFamily: 'Cairo', fontSize: 11 }} />
+                <XAxis type="number" tick={{ fontFamily: 'Alexandria', fontSize: 11 }} />
                 <YAxis
                   dataKey="nationality"
                   type="category"
-                  tick={{ fontFamily: 'Cairo', fontSize: 11 }}
+                  tick={{ fontFamily: 'Alexandria', fontSize: 11 }}
                   width={110}
                 />
-                <Tooltip contentStyle={{ fontFamily: 'Cairo', borderRadius: 8 }} />
-                <Bar dataKey="count" fill="#0B5E50" radius={[0, 6, 6, 0]} />
+                <Tooltip contentStyle={{ fontFamily: 'Alexandria', borderRadius: 8 }} />
+                <Bar dataKey="count" fill="#2D5BE4" radius={[0, 6, 6, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -302,7 +302,7 @@ export default function ReportsPage() {
             <div className="space-y-4">
               <div>
                 <p className="text-xs text-gray-500 mb-1">معدل الاسترداد</p>
-                <p className="text-3xl font-black text-[#0B5E50]">
+                <p className="text-3xl font-black text-[#2D5BE4]">
                   {(summary.refundRate * 100).toFixed(1)}%
                 </p>
               </div>

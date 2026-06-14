@@ -110,7 +110,7 @@ export default function OrdersPage() {
           <button
             disabled
             title="قريباً — لم يُربط بعد بنقطة /v1/admin/reports"
-            className="flex items-center gap-2 px-4 py-2 bg-[#0B5E50] text-white rounded-xl text-sm font-semibold opacity-60 cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-2 bg-[#2D5BE4] text-white rounded-xl text-sm font-semibold opacity-60 cursor-not-allowed"
           >
             <Download size={16} />
             تصدير Excel
@@ -119,14 +119,14 @@ export default function OrdersPage() {
       />
 
       {/* Filters */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-4 flex flex-wrap gap-3 items-center">
-        <div className="relative flex-1 min-w-[200px]">
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-4 flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:items-center">
+        <div className="relative w-full sm:flex-1 sm:min-w-[200px]">
           <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="بحث بالرقم المختصر أو اسم العامل (داخل الصفحة الحالية)"
-            className="w-full pr-9 pl-4 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B5E50]/20"
+            className="w-full pr-9 pl-4 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-[#2D5BE4]/20"
           />
         </div>
         <select
@@ -137,7 +137,7 @@ export default function OrdersPage() {
             setCursor(undefined);
             setCursorStack([]);
           }}
-          className="px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm"
+          className="w-full sm:w-auto px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm"
         >
           <option value="all">جميع الحالات</option>
           {BACKEND_ORDER_STATUSES.map((s) => (
@@ -155,14 +155,17 @@ export default function OrdersPage() {
           }}
           placeholder="+966..."
           dir="ltr"
-          className="px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm text-left w-44"
+          className="w-full sm:w-44 px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm text-left"
         />
-        <button onClick={resetFilters} className="text-sm text-gray-500 hover:text-[#0B5E50]">
+        <button
+          onClick={resetFilters}
+          className="text-sm text-gray-500 hover:text-[#2D5BE4] self-start sm:self-auto"
+        >
           إعادة تعيين
         </button>
         {query.isFetching && (
           <span className="text-xs text-gray-400 mr-auto inline-flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#0B5E50] animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-[#2D5BE4] animate-pulse" />
             تحديث...
           </span>
         )}
@@ -191,18 +194,18 @@ export default function OrdersPage() {
       )}
 
       {/* Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm min-w-[760px]">
             <thead>
               <tr className="bg-gray-50">
                 <th className="text-right px-4 py-3 font-semibold text-gray-600">الرقم</th>
                 <th className="text-right px-4 py-3 font-semibold text-gray-600">العميل</th>
-                <th className="text-right px-4 py-3 font-semibold text-gray-600">الباقة</th>
+                <th className="text-right px-4 py-3 font-semibold text-gray-600 hidden lg:table-cell">الباقة</th>
                 <th className="text-right px-4 py-3 font-semibold text-gray-600">العامل</th>
                 <th className="text-right px-4 py-3 font-semibold text-gray-600">المبلغ</th>
                 <th className="text-right px-4 py-3 font-semibold text-gray-600">الحالة</th>
-                <th className="text-right px-4 py-3 font-semibold text-gray-600">التاريخ</th>
+                <th className="text-right px-4 py-3 font-semibold text-gray-600 hidden md:table-cell">التاريخ</th>
                 <th className="text-right px-4 py-3 font-semibold text-gray-600">إجراءات</th>
               </tr>
             </thead>
@@ -212,7 +215,7 @@ export default function OrdersPage() {
               {!query.isPending &&
                 filtered.map((order) => (
                   <tr key={order.id} className="border-t border-gray-50 hover:bg-gray-50/50">
-                    <td className="px-4 py-3 font-semibold text-[#0B5E50]">
+                    <td className="px-4 py-3 font-semibold text-[#2D5BE4]">
                       {shortOrderRef(order.orderNumber, order.id)}
                     </td>
                     <td className="px-4 py-3">
@@ -220,7 +223,7 @@ export default function OrdersPage() {
                         {order.customerId.slice(0, 8)}
                       </p>
                     </td>
-                    <td className="px-4 py-3 text-gray-600">
+                    <td className="px-4 py-3 text-gray-600 hidden lg:table-cell">
                       {order.package?.nameAr ?? order.package?.nameEn ?? '—'}
                     </td>
                     <td className="px-4 py-3">
@@ -234,19 +237,19 @@ export default function OrdersPage() {
                     <td className="px-4 py-3">
                       <OrderStatusBadge status={order.status} />
                     </td>
-                    <td className="px-4 py-3 text-gray-500">{formatDate(order.createdAt)}</td>
+                    <td className="px-4 py-3 text-gray-500 hidden md:table-cell">{formatDate(order.createdAt)}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => setDetailId(order.id)}
-                          className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-[#0B5E50]"
+                          className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-[#2D5BE4]"
                           title="عرض التفاصيل"
                         >
                           <Eye size={15} />
                         </button>
                         <button
                           onClick={() => setStatusModalId(order.id)}
-                          className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-[#0B5E50]"
+                          className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-[#2D5BE4]"
                           title="تحديث الحالة"
                         >
                           <RefreshCw size={15} />
@@ -284,7 +287,7 @@ export default function OrdersPage() {
             <button
               onClick={goNext}
               disabled={!query.data?.nextCursor}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium bg-[#0B5E50] text-white hover:bg-[#073D34] disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium bg-[#2D5BE4] text-white hover:bg-[#0F234C] disabled:opacity-40 disabled:cursor-not-allowed"
             >
               التالي
               <ChevronLeft size={14} />
@@ -356,14 +359,14 @@ function OrderDetailModal({
       >
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-bold">تفاصيل الطلب</h3>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-gray-100">
+          <button onClick={onClose} aria-label="إغلاق" className="p-1 rounded-lg hover:bg-gray-100">
             <X size={20} />
           </button>
         </div>
 
         {isPending && (
           <div className="py-12 flex justify-center">
-            <div className="w-8 h-8 rounded-full border-2 border-gray-200 border-t-[#0B5E50] animate-spin" />
+            <div className="w-8 h-8 rounded-full border-2 border-gray-200 border-t-[#2D5BE4] animate-spin" />
           </div>
         )}
 
@@ -431,7 +434,7 @@ function OrderDetailModal({
             <div className="flex gap-3 mt-5">
               <button
                 onClick={() => onTransition(order.id)}
-                className="flex-1 py-2.5 bg-[#0B5E50] text-white rounded-xl font-semibold hover:bg-[#073D34]"
+                className="flex-1 py-2.5 bg-[#2D5BE4] text-white rounded-xl font-semibold hover:bg-[#0F234C]"
               >
                 تحديث الحالة
               </button>
@@ -501,7 +504,7 @@ function TransitionModal({
 
         {isPending && (
           <div className="py-8 flex justify-center">
-            <div className="w-6 h-6 rounded-full border-2 border-gray-200 border-t-[#0B5E50] animate-spin" />
+            <div className="w-6 h-6 rounded-full border-2 border-gray-200 border-t-[#2D5BE4] animate-spin" />
           </div>
         )}
 
@@ -519,7 +522,7 @@ function TransitionModal({
                   placeholder="ملاحظة (اختياري)"
                   maxLength={400}
                   rows={3}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-200 mb-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#0B5E50]/20"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 mb-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#2D5BE4]/20"
                 />
                 <div className="grid grid-cols-1 gap-2">
                   {transitions.map((t) => (
@@ -532,7 +535,7 @@ function TransitionModal({
                           ? 'bg-green-600 text-white hover:bg-green-700'
                           : t.tone === 'danger'
                             ? 'bg-red-600 text-white hover:bg-red-700'
-                            : 'bg-[#0B5E50] text-white hover:bg-[#073D34]'
+                            : 'bg-[#2D5BE4] text-white hover:bg-[#0F234C]'
                       }`}
                     >
                       {transition.isPending ? 'جاري التحديث...' : t.labelAr}
@@ -571,7 +574,7 @@ function DetailCell({
     <div className="bg-gray-50 rounded-xl p-3">
       <p className="text-xs text-gray-500 mb-1">{label}</p>
       {children ?? (
-        <p className={`font-semibold ${mono ? 'font-mono text-[#0B5E50]' : ''}`}>{value}</p>
+        <p className={`font-semibold ${mono ? 'font-mono text-[#2D5BE4]' : ''}`}>{value}</p>
       )}
     </div>
   );

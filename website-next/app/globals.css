@@ -1,36 +1,50 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-50: #EEF4FF;
-  --color-brand-100: #D9E6FF;
-  --color-brand-200: #B3CCFF;
-  --color-brand-300: #6B9CFF;
-  --color-brand-400: #4A7DFF;
-  --color-brand-500: #4B7BE5;
-  --color-brand-600: #3B68CC;
-  --color-brand-700: #2D54B2;
-  --color-brand-800: #1E3F99;
-  --color-brand-900: #0F2B80;
-  --color-brand-950: #0A1F5C;
-  
-  --color-accent-50: #FFFBEB;
-  --color-accent-100: #FEF3C7;
-  --color-accent-200: #FDE68A;
-  --color-accent-300: #FCD34D;
-  --color-accent-400: #FBBF24;
-  --color-accent-500: #C9A84C;
-  --color-accent-600: #B8942F;
-  --color-accent-700: #92740A;
-  --color-accent-800: #78610B;
-  --color-accent-900: #634F0D;
-  
+  /* ===== Brand blues — official kit: Sky #6599FE, Royal #2D5BE4, Navy #0F234C ===== */
+  --color-brand-50: #EFF4FE;
+  --color-brand-100: #D9E6FE;
+  --color-brand-200: #B6CCFB;
+  --color-brand-300: #6599FE;   /* Electric Sky Blue */
+  --color-brand-400: #477CF2;
+  --color-brand-500: #2D5BE4;   /* Vibrant Royal Blue (primary) */
+  --color-brand-600: #2349C0;
+  --color-brand-700: #1B3A9C;
+  --color-brand-800: #152C77;
+  --color-brand-900: #0F234C;   /* Midnight Navy */
+  --color-brand-950: #0A1836;
+
+  /* ===== Gold accent — official secondary #ECA423 ===== */
+  --color-accent-50: #FEF7E7;
+  --color-accent-100: #FBE9BF;
+  --color-accent-200: #F8D88A;
+  --color-accent-300: #F3C257;
+  --color-accent-400: #ECA423;
+  --color-accent-500: #D08D16;
+  --color-accent-600: #A8700F;
+  --color-accent-700: #855809;
+  --color-accent-800: #6B470B;
+  --color-accent-900: #573A0D;
+
+  /* ===== Green — official secondary #5DF285 ===== */
+  --color-green-300: #A6F8BD;
+  --color-green-400: #7DF59D;
+  --color-green-500: #5DF285;
+  --color-green-600: #2FD862;
+  --color-green-700: #1FAE4D;
+
+  /* ===== Surface (warm neutral) ===== */
   --color-surface-50: #FAFAF9;
   --color-surface-100: #F7F6F2;
   --color-surface-200: #EEEEE8;
   --color-surface-300: #E0DFD8;
   --color-surface-400: #C8C7BF;
-  
-  --font-cairo: "Cairo", sans-serif;
+
+  /* ===== Fonts — official kit: Alexandria (Arabic/primary), Manrope (Latin), Glancyr (display) ===== */
+  --font-sans: var(--font-alexandria), "Alexandria", "Segoe UI", sans-serif;
+  --font-display: var(--font-glancyr), var(--font-alexandria), sans-serif;
+  --font-latin: var(--font-manrope), var(--font-alexandria), sans-serif;
+  --font-cairo: var(--font-alexandria), "Alexandria", sans-serif; /* legacy alias */
 
   --animate-float: float 6s ease-in-out infinite;
   --animate-float-delayed: float 6s ease-in-out 2s infinite;
@@ -80,9 +94,9 @@
   }
 
   body {
-    font-family: var(--font-cairo);
+    font-family: var(--font-sans);
     background-color: var(--color-surface-100);
-    color: #1a1a2e;
+    color: #0F234C;
     direction: rtl;
     overflow-x: hidden;
   }
@@ -123,14 +137,14 @@
 }
 
 @utility glass-dark {
-  background: rgba(10, 31, 92, 0.85);
+  background: rgba(15, 35, 76, 0.85);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(75, 123, 229, 0.2);
+  border: 1px solid rgba(45, 91, 228, 0.2);
 }
 
 @utility gradient-text {
-  background: linear-gradient(135deg, var(--color-brand-500), var(--color-brand-800));
+  background: linear-gradient(135deg, var(--color-brand-300), var(--color-brand-500));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -176,7 +190,7 @@
     content: "";
     position: absolute;
     inset: -2px;
-    background: linear-gradient(45deg, var(--color-brand-500), var(--color-accent-500), var(--color-brand-300), var(--color-accent-400));
+    background: linear-gradient(45deg, var(--color-brand-500), var(--color-accent-400), var(--color-brand-300), var(--color-accent-300));
     background-size: 400% 400%;
     animation: gradient 6s ease infinite;
     border-radius: inherit;

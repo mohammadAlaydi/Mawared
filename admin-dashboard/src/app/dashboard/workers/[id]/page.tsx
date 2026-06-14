@@ -38,7 +38,7 @@ export default function WorkerProfilePage({ params }: { params: Promise<{ id: st
   if (isPending) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="w-10 h-10 rounded-full border-2 border-gray-200 border-t-[#0B5E50] animate-spin" />
+        <div className="w-10 h-10 rounded-full border-2 border-gray-200 border-t-[#2D5BE4] animate-spin" />
       </div>
     );
   }
@@ -79,7 +79,7 @@ export default function WorkerProfilePage({ params }: { params: Promise<{ id: st
       {/* Breadcrumb */}
       <button
         onClick={() => router.push('/dashboard/workers')}
-        className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#0B5E50] mb-4"
+        className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#2D5BE4] mb-4"
       >
         <ArrowRight size={14} />
         رجوع للقائمة
@@ -88,7 +88,7 @@ export default function WorkerProfilePage({ params }: { params: Promise<{ id: st
       {/* Hero card */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-4">
         <div className="flex items-start gap-6 flex-wrap">
-          <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-[#0B5E50] to-[#1A7A69] flex items-center justify-center text-white shrink-0">
+          <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-[#2D5BE4] to-[#6599FE] flex items-center justify-center text-white shrink-0">
             <User size={40} />
           </div>
           <div className="flex-1 min-w-[200px]">
@@ -119,9 +119,9 @@ export default function WorkerProfilePage({ params }: { params: Promise<{ id: st
               </span>
             </div>
           </div>
-          <div className="text-left">
+          <div className="text-end">
             <p className="text-xs text-gray-500 mb-0.5">الراتب الشهري</p>
-            <p className="text-2xl font-black text-[#0B5E50]">
+            <p className="text-2xl font-black text-[#2D5BE4]">
               {formatMoneyMinor(worker.monthlySalaryMinor, worker.currency)}
             </p>
           </div>
@@ -225,12 +225,12 @@ function Fact({
 }) {
   return (
     <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
-      <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center text-[#0B5E50]">
+      <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center text-[#2D5BE4]">
         <Icon size={16} />
       </div>
       <div>
         <p className="text-[11px] text-gray-500">{label}</p>
-        <p className={`text-sm font-semibold ${mono ? 'font-mono text-[#0B5E50]' : ''}`}>
+        <p className={`text-sm font-semibold ${mono ? 'font-mono text-[#2D5BE4]' : ''}`}>
           {value}
         </p>
       </div>
