@@ -52,7 +52,7 @@ export default function Sidebar({ collapsed, onToggleCollapse, mobileOpen, onClo
           bg-[#0F234C] text-white flex flex-col shrink-0 h-screen
           transition-transform duration-300 ease-out
           ${mobileOpen ? 'translate-x-0' : 'translate-x-full'}
-          lg:static lg:translate-x-0 lg:w-64 lg:max-w-none lg:z-auto lg:sticky lg:top-0
+          lg:static lg:translate-x-0 lg:max-w-none lg:z-auto lg:sticky lg:top-0
           lg:transition-[width]
         `}
       >
