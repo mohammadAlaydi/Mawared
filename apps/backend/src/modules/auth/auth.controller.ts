@@ -23,6 +23,8 @@ import { SessionService } from './session.service';
 import { OtpRequestDto } from './dto/otp-request.dto';
 import { OtpVerifyDto } from './dto/otp-verify.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { PhoneCheckDto, PhoneCheckSchema } from './dto/phone-check.dto';
+import { ZodValidationPipe } from 'nestjs-zod';
 
 @ApiTags('auth')
 @Controller({ path: 'auth', version: '1' })
@@ -40,6 +42,27 @@ export class AuthController {
   @HttpCode(204)
   async requestOtp(@Body() body: OtpRequestDto, @Ip() ip: string): Promise<void> {
     await this.otp.request(body.phone, body.locale, ip);
+  }
+
+  /**
+   * Check whether a customer account already exists for a phone number, so the
+   * app can route to login (existing) vs sign-up (new) before sending an OTP.
+   *
+   * NOTE: this intentionally reveals account existence, which the OTP request
+   * flow deliberately does not. It is a product requirement for the sign-up
+   * UX; keep it phone-only and rate-limited at the edge if abuse appears.
+   */
+  @Public()
+  @Post('phone/check')
+  @HttpCode(200)
+  async checkPhone(
+    @Body(new ZodValidationPipe(PhoneCheckSchema)) body: PhoneCheckDto,
+  ): Promise<{ exists: boolean }> {
+    const user = await this.prisma.user.findFirst({
+      where: { phoneE164: body.phone, role: 'CUSTOMER', deletedAt: null },
+      select: { id: true },
+    });
+    return { exists: user !== null };
   }
 
   /** Verify an OTP and exchange it for tokens. Auto-creates the customer if new. */
