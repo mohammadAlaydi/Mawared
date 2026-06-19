@@ -71,6 +71,18 @@ export class OtpService {
 
   /** Returns true on success. Throws an HttpException on failure cases. */
   async verify(phone: string, code: string): Promise<boolean> {
+    // Dev-only static OTP. Opt-in via the AUTH_DEV_STATIC_OTP env var so logins
+    // succeed on deployments where SMS is log-only. The var is absent by
+    // default (and must stay unset in real production). `AUTH_DEV_STATIC_OTP=
+    // "any"` accepts any submitted code; otherwise it must match exactly.
+    const staticOtp = this.config.get('AUTH_DEV_STATIC_OTP', { infer: true });
+    if (staticOtp && (staticOtp === 'any' || staticOtp === code)) {
+      this.logger.warn({ phone }, '[DEV] static OTP accepted — real SMS bypassed');
+      await this.redis.del(this.otpKey(phone)).catch(() => undefined);
+      await this.audit(phone, 'VERIFIED');
+      return true;
+    }
+
     const key = this.otpKey(phone);
     const stored = await this.redis.hgetall(key);
     if (!stored.hash) {

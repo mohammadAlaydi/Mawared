@@ -28,6 +28,13 @@ export const EnvSchema = z.object({
   ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().int().positive().default(900),
   REFRESH_TOKEN_TTL_SECONDS: z.coerce.number().int().positive().default(2592000),
 
+  // Dev-only OTP shortcut. When set, OtpService.verify accepts this code for
+  // any phone without checking Redis/argon2 (so logins work where SMS is
+  // log-only). Use the literal "any" to accept ANY submitted code. Opt-in:
+  // absent by default and MUST stay unset in real production. See
+  // OtpService.verify.
+  AUTH_DEV_STATIC_OTP: z.string().optional(),
+
   // Third parties — required at M2; optional during M0.
   TWILIO_ACCOUNT_SID: z.string().optional(),
   TWILIO_AUTH_TOKEN: z.string().optional(),
